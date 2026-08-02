@@ -1,0 +1,14 @@
+project:
+  output-dir: _docs
+
+website:
+  title: "mcpmini"
+  site-url: "https://AnswerDotAI.github.io/mcpmini"
+  description: "A small readable MCP library for serving Python functions as tools and calling MCP servers"
+  repo-branch: main
+  repo-url: "https://github.com/AnswerDotAI/mcpmini"
+
+format-links:
+  - html
+  - format: commonmark
+    text: Markdown
