@@ -108,16 +108,23 @@ async def serve_stdio(
     reader=None, # asyncio stream to read messages from; stdin if None
     writer=None, # asyncio stream to write replies to; stdout if None
 ):
-    "Serve `srv` over newline-delimited JSON-RPC until EOF"
+    "Serve `srv` over newline-delimited JSON-RPC until EOF, dispatching messages concurrently"
     if reader is None: reader,writer = await _stdio_streams()
+    tasks,wlock = set(),asyncio.Lock()
+    async def _one(msg):
+        resp = jerr(None, -32700, 'Parse error') if msg is None else await srv.dispatch(msg)
+        if resp is not None:
+            async with wlock:
+                writer.write(json.dumps(resp).encode()+b'\n')
+                await writer.drain()
     while line := await reader.readline():
         if not line.strip(): continue
         try: msg = json.loads(line)
         except Exception: msg = None
-        resp = jerr(None, -32700, 'Parse error') if msg is None else await srv.dispatch(msg)
-        if resp is not None:
-            writer.write(json.dumps(resp).encode()+b'\n')
-            await writer.drain()
+        t = asyncio.create_task(_one(msg))
+        tasks.add(t)
+        t.add_done_callback(tasks.discard)
+    if tasks: await asyncio.gather(*tasks, return_exceptions=True)
 
 # %% ../nbs/00_core.ipynb #e68c7a8a
 def auth_app(
@@ -179,10 +186,13 @@ class StdioTransport:
     "JSON-RPC to a subprocess over its stdin/stdout"
     def __init__(self,
         argv, # Server command line, e.g. `['mymcp', '--flag']`
+        env=None, # Environment for the subprocess; inherited if None
+        cwd=None, # Working directory for the subprocess; inherited if None
     ):
-        self.argv,self.p,self.proto = argv,None,None
+        self.argv,self.env,self.cwd,self.p,self.proto = argv,env,cwd,None,None
     async def start(self):
-        self.p = await asyncio.create_subprocess_exec(*self.argv, stdin=asyncio.subprocess.PIPE, stdout=asyncio.subprocess.PIPE)
+        self.p = await asyncio.create_subprocess_exec(*self.argv, stdin=asyncio.subprocess.PIPE, stdout=asyncio.subprocess.PIPE,
+            env=self.env, cwd=self.cwd)
     async def send(self, msg):
         self.p.stdin.write(json.dumps(msg).encode()+b'\n')
         await self.p.stdin.drain()
@@ -229,7 +239,8 @@ class MCPClient:
     ):
         self.tr,self.tools,self._id = tr,AttrDict(),0
     @classmethod
-    def stdio(cls, argv): return cls(StdioTransport(argv))
+    @delegates(StdioTransport)
+    def stdio(cls, argv, **kwargs): return cls(StdioTransport(argv, **kwargs))
     @classmethod
     @delegates(HTTPTransport)
     def http(cls, url, **kwargs): return cls(HTTPTransport(url, **kwargs))

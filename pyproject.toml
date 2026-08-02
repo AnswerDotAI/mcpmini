@@ -37,3 +37,6 @@ version = {attr = "mcpmini.__version__"}
 include = ["mcpmini"]
 
 [tool.nbdev]
+
+[tool.chkstyle]
+skip_paths = ["_modidx.py"]
