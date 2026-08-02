@@ -15,11 +15,17 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
 ]
-dependencies = []
+dependencies = ["fastcore>=2.1.17", "toolslm>=0.3.47", "httpx>=0.28.1", "starlette>=1.3.1", "uvicorn>=0.52.0"]
+
+[dependency-groups]
+dev = ["mcp>=1.29.0"]
 
 [project.urls]
 Repository = "https://github.com/AnswerDotAI/mcpmini"
 Documentation = "https://AnswerDotAI.github.io/mcpmini/"
+
+[project.scripts]
+mcpmini = "mcpmini.core:main"
 
 [project.entry-points.nbdev]
 mcpmini = "mcpmini._modidx:d"
