@@ -4,7 +4,7 @@ Serve Python functions as MCP tools, and call any MCP server's tools as Python f
 
 ## Serving tools
 
-A tool is a docmented Python function, sync or async: toolslm's `get_schema` turns its docments into the MCP `inputSchema`, so there is no registration ceremony beyond passing functions to `MCPServer`. The server core is one stateless `dispatch` from message dict to reply dict — it speaks the `initialize`-era protocol current clients use, while keeping the shape the 2026-07-28 stateless revision standardized. `serve_stdio` serves it as newline-delimited JSON for host-launched local servers; `create_app` wraps it as a mountable ASGI app with one POST endpoint, and `serve_mcp` runs that under uvicorn.
+A tool is a docmented Python function, sync or async: fastcore's `get_schema` turns its docments into the MCP `inputSchema`, so there is no registration ceremony beyond passing functions to `MCPServer`. The server core is one stateless `dispatch` from message dict to reply dict — it speaks the `initialize`-era protocol current clients use, while keeping the shape the 2026-07-28 stateless revision standardized. `serve_stdio` serves it as newline-delimited JSON for host-launched local servers; `create_app` wraps it as a mountable ASGI app with one POST endpoint, and `serve_mcp` runs that under uvicorn.
 
 ## Auth
 
@@ -31,7 +31,7 @@ import asyncio, httpx, importlib.util, inspect, json, secrets, sys, traceback
 from fastcore.utils import *
 from fastcore.meta import delegates
 from fastcore.script import call_parse
-from toolslm.funccall import get_schema, mk_tool
+from fastcore.funccall import get_schema, mk_tool
 from starlette.applications import Starlette
 from starlette.responses import JSONResponse, Response
 from starlette.routing import Route
