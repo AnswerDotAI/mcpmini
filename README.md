@@ -30,7 +30,7 @@ def fahrenheit(
 srv = MCPServer('demo', [fahrenheit])
 ```
 
-`asyncio.run(serve_stdio(srv))` serves it as a host-launched stdio server; `asyncio.run(serve_mcp(srv, port=8000, token='S'))` serves it over streamable HTTP behind a bearer token (non-loopback binds refuse to start tokenless unless you pass `no_token=True`). A file of docmented functions serves straight from the command line — `mcpmini tools.py`, or `mcpmini tools.py --transport http --port 8000` — which is the shape MCP host configs launch. Then any MCP client can connect — for example Claude Code:
+`asyncio.run(serve_stdio(srv))` serves it as a host-launched stdio server; a tool on that transport can call `await srv.elicit(message, schema)`, and an `MCPClient.stdio(..., on_request=handler)` supplies the structured answer while the original tool call remains active. `asyncio.run(serve_mcp(srv, port=8000, token='S'))` serves it over streamable HTTP behind a bearer token (non-loopback binds refuse to start tokenless unless you pass `no_token=True`). A file of docmented functions serves straight from the command line — `mcpmini tools.py`, or `mcpmini tools.py --transport http --port 8000` — which is the shape MCP host configs launch. Then any MCP client can connect — for example Claude Code:
 
 ``` sh
 claude mcp add --transport http demo http://127.0.0.1:8000/mcp -H "Authorization: Bearer S"

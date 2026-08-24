@@ -4,7 +4,7 @@ The implementation, its examples, and its tests are one story in `nbs/00_core.ip
 
 ## Protocol era
 
-The server and client speak the 2025-11-25-era protocol (`initialize` handshake, `tools/*`, `ping`), which is what shipping clients negotiate: Claude Code 2.1.220 proposes `protocolVersion: "2025-11-25"` in a classic handshake (verified by wiretap 2026-08-02; no `server/discover`, no `_meta` protocol fields). The 2026-07-28 stateless revision is the design target though: dispatch is already a pure message-to-reply function with no per-connection state, no sessions are minted, and the transports own all remaining ceremony — so adopting the new era when clients arrive should be additive (per-request `_meta`, `server/discover`) rather than a redesign. `PROTO_VERSIONS` is the supported list, newest first.
+The server and client speak the 2025-11-25-era protocol (`initialize` handshake, `tools/*`, `ping`), which is what shipping clients negotiate: Claude Code 2.1.220 proposes `protocolVersion: "2025-11-25"` in a classic handshake (verified by wiretap 2026-08-02; no `server/discover`, no `_meta` protocol fields). `MCPServer.dispatch` still has no connection or session state. During a stdio tool call, a request-local callable lets that tool send a nested request such as `elicitation/create`; `serve_stdio` owns its correlation with the client response. The 2026-07-28 stateless revision remains the design target, so adopting it should be additive (per-request `_meta`, `server/discover`) rather than a redesign. `PROTO_VERSIONS` is the supported list, newest first.
 
 ## The 2026-07-28 upgrade, concretely
 
@@ -28,15 +28,15 @@ Client:
 
 Upgrade paths that stay optional extensions/patterns, relevant to the kernel-server consumer:
 
-- MRTR (SEP-2322): server-initiated interaction becomes `resultType: "input_required"` + client retry with `inputResponses` — the natural carrier for a kernel's `input()`.
+- MRTR (SEP-2322): server-initiated interaction becomes `resultType: "input_required"` + client retry with `inputResponses`. This will replace old-era stdio elicitation where available; the tool-facing `await srv.elicit(...)` shape need not change.
 - Tasks (`io.modelcontextprotocol/tasks`, SEP-2663): durable task handles polled via `tasks/get`, mid-flight input via `tasks/update` — the carrier for long-running cells that outlive connections. Opt-in per request from both sides, so blocking execute remains the compatible default.
 - `subscriptions/listen` replaces the old GET stream for change notifications; we emit none today, so nothing is lost by ignoring it until there's something to notify.
 ## Deliberately absent
 
 - **Session minting** (`Mcp-Session-Id`): legal to omit in the old era, removed in 2026-07-28. The client echoes ids from servers that mint (the FastMCP interop test covers this).
-- **SSE response streaming, server side**: a server may answer any POST with plain JSON, and this one always does. Streaming earns its place when there are progress notifications to carry — which arrives with long-running tool work (the jupygate-backed kernel server), not before. The client parses SSE bodies, since other servers send them.
+- **SSE response streaming, server side**: a server may answer any POST with plain JSON, and this one always does. Consequently the current server-initiated elicitation path is stdio-only; HTTP needs MRTR or streaming before it can carry interaction during a call. The client parses SSE bodies, since other servers send them.
 - **OAuth**: auth is a static bearer token in raw ASGI middleware (`auth_app`, constant-time compare). The SDK's `token_verifier`/`AuthSettings` model an OAuth resource server, which is ceremony for a personal token. This design (and the token flag conventions) comes from clikernel PR #25.
-- **Sampling, roots, logging**: deprecated in 2026-07-28; new implementations shouldn't add them.
+- **Sampling, roots, logging**: deprecated in 2026-07-28; new implementations shouldn't add them. Elicitation remains because current stdio clients need it for request-scoped user input.
 - **Legacy HTTP+SSE transport** (2024-11-05): deprecated since 2025-03-26; nothing we talk to speaks it.
 
 ## Auth policy
@@ -45,7 +45,7 @@ Capability and policy are separated: `create_app` takes whatever token it's give
 
 ## Tests
 
-The notebook is the test suite (`nbdev-test`, safe: servers bind loopback ephemeral ports only, and everything token-spending is `#| eval: false`). Interop runs against the official SDK in both directions — its client against our server, our client against FastMCP — because self-consistency proves nothing about the wire. The live sections drive Claude Code's real client headless via the Agent SDK (stdio via the installed `mcpmini` script, HTTP with a bearer header); rerun them manually when the protocol or Claude Code moves. The `mcp` dev dep exists for the interop cells.
+The notebook is the executable tutorial (`nbdev-test`, safe: servers bind loopback ephemeral ports only, and everything token-spending is `#| eval: false`). Focused pytest files hold protocol edge and error matrices that would obscure that story. Interop runs against the official SDK in both directions — its client against our server, our client against FastMCP — because self-consistency proves nothing about the wire. The live sections drive Claude Code's real client headless via the Agent SDK (stdio via the installed `mcpmini` script, HTTP with a bearer header); rerun them manually when the protocol or Claude Code moves. The `mcp` dev dep exists for the interop cells.
 
 ## Consumers
 
