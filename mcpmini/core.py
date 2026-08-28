@@ -321,12 +321,19 @@ class HTTPTransport:
         if self.sess: h['Mcp-Session-Id'] = self.sess
         if self.proto: h['MCP-Protocol-Version'] = self.proto
         r = await self.client.post(self.url, json=msg, headers=h)
-        r.raise_for_status()
         if sid := r.headers.get('mcp-session-id'): self.sess = sid
-        if 'id' not in msg: return None
+        if 'id' not in msg:
+            r.raise_for_status()
+            return None
         if r.headers.get('content-type','').startswith('text/event-stream'):
+            r.raise_for_status()
             return first(m for m in sse_data(r.text) if m.get('id')==msg['id'])
-        return r.json()
+        try: data = r.json()
+        except Exception:
+            r.raise_for_status()
+            raise
+        if r.is_error and not (isinstance(data, dict) and data.get('jsonrpc')=='2.0'): r.raise_for_status()
+        return data
     async def aclose(self): await self.client.aclose()
 
 # %% ../nbs/00_core.ipynb #f76c6545
@@ -355,11 +362,17 @@ class MCPClient:
             clientInfo=dict(name='mcpmini', version=__version__))
         self.tr.proto = self.info['protocolVersion']
         await self.tr.send(jreq('notifications/initialized'))
-        for t in (await self.rpc('tools/list'))['tools']: self.tools[t['name']] = mk_tool(self.call_text, dict2obj(t))
+        for t in (await self.rpc('tools/list'))['tools']: self.tools[t['name']] = mk_tool(self.call_value, dict2obj(t))
         return self
     async def call_tool(self, name, **kw):
         "The raw `tools/call` result dict"
         return await self.rpc('tools/call', name=name, arguments=kw)
+    async def call_value(self, name, **kw):
+        "The structured content of a tool reply when present, otherwise its text; raises if the tool errored"
+        res = await self.call_tool(name, **kw)
+        txt = '\n'.join(c['text'] for c in res.get('content',[]) if c.get('type')=='text')
+        if res.get('isError'): raise RuntimeError(txt)
+        return res['structuredContent'] if 'structuredContent' in res else txt
     async def call_text(self, name, **kw):
         "The text of a `tools/call` reply; raises if the tool errored"
         res = await self.call_tool(name, **kw)
