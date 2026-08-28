@@ -16,7 +16,7 @@ HTTP auth is a static bearer token checked by `auth_app`, raw ASGI middleware wi
 
 ## Calling servers
 
-`MCPClient.stdio(argv)` and `MCPClient.http(url)` drive the handshake and turn the server's `tools/list` into bound Python callables with real signatures, docs, and defaults (`mk_tool`, the mirror of `get_schema`). Bound tools and `call_tool` return `structuredContent` when present, otherwise reply text, and raise on `isError`; `call_text` always returns text. A stdio client may supply `on_request(method, params)` to answer server requests such as elicitation during a tool call. The HTTP transport also handles what other servers send that ours doesn't: SSE response bodies and `Mcp-Session-Id` minting. Both directions are exercised against the official SDK's opposite half.
+`MCPClient.stdio(argv)` and `MCPClient.http(url)` drive the handshake and turn the server's `tools/list` into bound Python callables with real signatures, docs, and defaults (`mk_tool`, the mirror of `get_schema`). `call_tool` returns a dict-like `ToolResult`: `.structured` exposes parsed `structuredContent`, while `str(result)` combines text blocks with JSON-encoded structured content. Bound tools and `call_text` return that text form. Tool errors raise with the same readable rendering. A stdio client may supply `on_request(method, params)` to answer server requests such as elicitation during a tool call. The HTTP transport also handles what other servers send that ours doesn't: SSE response bodies and `Mcp-Session-Id` minting. Both directions are exercised against the official SDK's opposite half.
 
 Docs: https://AnswerDotAI.github.io/mcpmini/core.html.md"""
 
@@ -25,7 +25,7 @@ Docs: https://AnswerDotAI.github.io/mcpmini/core.html.md"""
 # %% auto #0
 __all__ = ['PROTO_VERSIONS', 'jreq', 'jtool', 'jresp', 'jerr', 'send_jmsg', 'recv_jmsg', 'MCPServer', 'StdioPeer', 'stdio_peer',
            'serve_stdio', 'auth_app', 'create_app', 'serve_mcp', 'sse_data', 'StdioTransport', 'HTTPTransport',
-           'MCPClient', 'load_server', 'main']
+           'ToolResult', 'MCPClient', 'load_server', 'main']
 
 # %% ../nbs/00_core.ipynb #da4d26dd
 import asyncio, contextlib, contextvars, httpx, importlib.util, inspect, json, secrets, socket, sys, traceback
@@ -330,9 +330,16 @@ class HTTPTransport:
     async def aclose(self): await self.client.aclose()
 
 # %% ../nbs/00_core.ipynb #f76c6545
-def _tool_text(res):
-    txt = '\n'.join(c['text'] for c in res.get('content',[]) if c.get('type')=='text')
-    return txt if txt or 'structuredContent' not in res else repr(res['structuredContent'])
+class ToolResult(AttrDict):
+    "A raw MCP tool result with readable text and parsed structured content"
+    @property
+    def text(self): return '\n'.join(c['text'] for c in self.get('content',[]) if c.get('type')=='text')
+    @property
+    def structured(self): return self.get('structuredContent')
+    def __str__(self):
+        parts = [self.text] if self.text else []
+        if 'structuredContent' in self: parts.append(json.dumps(self.structured, ensure_ascii=False))
+        return '\n'.join(parts)
 
 class MCPClient:
     "Call an MCP server's tools as Python functions"
@@ -359,21 +366,16 @@ class MCPClient:
             clientInfo=dict(name='mcpmini', version=__version__))
         self.tr.proto = self.info['protocolVersion']
         await self.tr.send(jreq('notifications/initialized'))
-        for t in (await self.rpc('tools/list'))['tools']: self.tools[t['name']] = mk_tool(self.call_tool, dict2obj(t))
+        for t in (await self.rpc('tools/list'))['tools']: self.tools[t['name']] = mk_tool(self.call_text, dict2obj(t))
         return self
-    async def _call_tool(self, name, **kw):
-        "The raw successful `tools/call` result dict; raises if the tool errored"
-        res = await self.rpc('tools/call', name=name, arguments=kw)
-        if res.get('isError'): raise RuntimeError(_tool_text(res))
-        return res
     async def call_tool(self, name, **kw):
-        "The structured content of a tool reply when present, otherwise its text; raises if the tool errored"
-        res = await self._call_tool(name, **kw)
-        txt = _tool_text(res)
-        return res['structuredContent'] if 'structuredContent' in res else txt
+        "A smart raw `ToolResult`; raises if the tool errored"
+        res = ToolResult(await self.rpc('tools/call', name=name, arguments=kw))
+        if res.get('isError'): raise RuntimeError(str(res))
+        return res
     async def call_text(self, name, **kw):
         "The text of a `tools/call` reply; raises if the tool errored"
-        return _tool_text(await self._call_tool(name, **kw))
+        return str(await self.call_tool(name, **kw))
     async def __aenter__(self): return await self.start()
     async def __aexit__(self, *args): await self.tr.aclose()
 
