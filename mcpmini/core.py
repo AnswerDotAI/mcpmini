@@ -16,7 +16,7 @@ HTTP auth is a static bearer token checked by `auth_app`, raw ASGI middleware wi
 
 ## Calling servers
 
-`MCPClient.stdio(argv)` and `MCPClient.http(url)` drive the handshake and turn the server's `tools/list` into bound Python callables with real signatures, docs, and defaults (`mk_tool`, the mirror of `get_schema`). `call_tool` returns a dict-like `ToolResult`: `.structured` exposes parsed `structuredContent`, while `str(result)` combines text blocks with JSON-encoded structured content. Bound tools and `call_text` return that text form. Tool errors raise with the same readable rendering. A stdio client may supply `on_request(method, params)` to answer server requests such as elicitation during a tool call. The HTTP transport also handles what other servers send that ours doesn't: SSE response bodies and `Mcp-Session-Id` minting. Both directions are exercised against the official SDK's opposite half.
+`MCPClient.stdio(argv)` and `MCPClient.http(url)` drive the handshake and turn the server's `tools/list` into bound Python callables with real signatures, docs, and defaults (`mk_tool`, the mirror of `get_schema`). Bound tools and `call_tool` return a dict-like `ToolResult`: `.structured` exposes parsed `structuredContent`, while `str(result)` combines text blocks with JSON-encoded structured content. `call_text` returns that text form directly. Tool errors raise with the same readable rendering. A stdio client may supply `on_request(method, params)` to answer server requests such as elicitation during a tool call. The HTTP transport also handles what other servers send that ours doesn't: SSE response bodies and `Mcp-Session-Id` minting. Both directions are exercised against the official SDK's opposite half.
 
 Docs: https://AnswerDotAI.github.io/mcpmini/core.html.md"""
 
@@ -366,7 +366,7 @@ class MCPClient:
             clientInfo=dict(name='mcpmini', version=__version__))
         self.tr.proto = self.info['protocolVersion']
         await self.tr.send(jreq('notifications/initialized'))
-        for t in (await self.rpc('tools/list'))['tools']: self.tools[t['name']] = mk_tool(self.call_text, dict2obj(t))
+        for t in (await self.rpc('tools/list'))['tools']: self.tools[t['name']] = mk_tool(self.call_tool, dict2obj(t))
         return self
     async def call_tool(self, name, **kw):
         "A smart raw `ToolResult`; raises if the tool errored"
