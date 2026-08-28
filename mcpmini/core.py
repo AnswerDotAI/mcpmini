@@ -321,19 +321,12 @@ class HTTPTransport:
         if self.sess: h['Mcp-Session-Id'] = self.sess
         if self.proto: h['MCP-Protocol-Version'] = self.proto
         r = await self.client.post(self.url, json=msg, headers=h)
+        if r.is_error: raise RuntimeError(f'HTTP {r.status_code}: {r.text}')
         if sid := r.headers.get('mcp-session-id'): self.sess = sid
-        if 'id' not in msg:
-            r.raise_for_status()
-            return None
+        if 'id' not in msg: return None
         if r.headers.get('content-type','').startswith('text/event-stream'):
-            r.raise_for_status()
             return first(m for m in sse_data(r.text) if m.get('id')==msg['id'])
-        try: data = r.json()
-        except Exception:
-            r.raise_for_status()
-            raise
-        if r.is_error and not (isinstance(data, dict) and data.get('jsonrpc')=='2.0'): r.raise_for_status()
-        return data
+        return r.json()
     async def aclose(self): await self.client.aclose()
 
 # %% ../nbs/00_core.ipynb #f76c6545
