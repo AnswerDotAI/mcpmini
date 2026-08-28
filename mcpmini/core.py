@@ -16,7 +16,7 @@ HTTP auth is a static bearer token checked by `auth_app`, raw ASGI middleware wi
 
 ## Calling servers
 
-`MCPClient.stdio(argv)` and `MCPClient.http(url)` drive the handshake and turn the server's `tools/list` into bound Python callables with real signatures, docs, and defaults (`mk_tool`, the mirror of `get_schema`). Bound tools return reply text and raise on `isError`; `call_tool` returns the raw result. A stdio client may supply `on_request(method, params)` to answer server requests such as elicitation during a tool call. The HTTP transport also handles what other servers send that ours doesn't: SSE response bodies and `Mcp-Session-Id` minting. Both directions are exercised against the official SDK's opposite half.
+`MCPClient.stdio(argv)` and `MCPClient.http(url)` drive the handshake and turn the server's `tools/list` into bound Python callables with real signatures, docs, and defaults (`mk_tool`, the mirror of `get_schema`). Bound tools return reply text and raise on `isError`; `call_tool` returns the raw successful result and raises on tool errors. A stdio client may supply `on_request(method, params)` to answer server requests such as elicitation during a tool call. The HTTP transport also handles what other servers send that ours doesn't: SSE response bodies and `Mcp-Session-Id` minting. Both directions are exercised against the official SDK's opposite half.
 
 Docs: https://AnswerDotAI.github.io/mcpmini/core.html.md"""
 
@@ -332,8 +332,7 @@ class HTTPTransport:
 # %% ../nbs/00_core.ipynb #f76c6545
 def _tool_text(res):
     txt = '\n'.join(c['text'] for c in res.get('content',[]) if c.get('type')=='text')
-    if res.get('isError'): raise RuntimeError(txt)
-    return txt
+    return txt if txt or 'structuredContent' not in res else repr(res['structuredContent'])
 
 class MCPClient:
     "Call an MCP server's tools as Python functions"
@@ -363,8 +362,10 @@ class MCPClient:
         for t in (await self.rpc('tools/list'))['tools']: self.tools[t['name']] = mk_tool(self.call_value, dict2obj(t))
         return self
     async def call_tool(self, name, **kw):
-        "The raw `tools/call` result dict"
-        return await self.rpc('tools/call', name=name, arguments=kw)
+        "The raw successful `tools/call` result dict; raises if the tool errored"
+        res = await self.rpc('tools/call', name=name, arguments=kw)
+        if res.get('isError'): raise RuntimeError(_tool_text(res))
+        return res
     async def call_value(self, name, **kw):
         "The structured content of a tool reply when present, otherwise its text; raises if the tool errored"
         res = await self.call_tool(name, **kw)
