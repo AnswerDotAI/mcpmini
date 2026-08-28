@@ -330,6 +330,11 @@ class HTTPTransport:
     async def aclose(self): await self.client.aclose()
 
 # %% ../nbs/00_core.ipynb #f76c6545
+def _tool_text(res):
+    txt = '\n'.join(c['text'] for c in res.get('content',[]) if c.get('type')=='text')
+    if res.get('isError'): raise RuntimeError(txt)
+    return txt
+
 class MCPClient:
     "Call an MCP server's tools as Python functions"
     def __init__(self,
@@ -363,15 +368,11 @@ class MCPClient:
     async def call_value(self, name, **kw):
         "The structured content of a tool reply when present, otherwise its text; raises if the tool errored"
         res = await self.call_tool(name, **kw)
-        txt = '\n'.join(c['text'] for c in res.get('content',[]) if c.get('type')=='text')
-        if res.get('isError'): raise RuntimeError(txt)
+        txt = _tool_text(res)
         return res['structuredContent'] if 'structuredContent' in res else txt
     async def call_text(self, name, **kw):
         "The text of a `tools/call` reply; raises if the tool errored"
-        res = await self.call_tool(name, **kw)
-        txt = '\n'.join(c['text'] for c in res.get('content',[]) if c.get('type')=='text')
-        if res.get('isError'): raise RuntimeError(txt)
-        return txt
+        return _tool_text(await self.call_tool(name, **kw))
     async def __aenter__(self): return await self.start()
     async def __aexit__(self, *args): await self.tr.aclose()
 
