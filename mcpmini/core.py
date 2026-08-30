@@ -16,7 +16,7 @@ HTTP auth is a static bearer token checked by `auth_app`, raw ASGI middleware wi
 
 ## Calling servers
 
-`MCPClient.stdio(argv)` and `MCPClient.http(url)` drive the handshake and turn the server's `tools/list` into bound Python callables with real signatures, docs, and defaults (`mk_tool`, the mirror of `get_schema`). Bound tools return reply text and raise on `isError`; `call_tool` returns the raw result. A stdio client may supply `on_request(method, params)` to answer server requests such as elicitation during a tool call. The HTTP transport also handles what other servers send that ours doesn't: SSE response bodies and `Mcp-Session-Id` minting. Both directions are exercised against the official SDK's opposite half.
+`MCPClient.stdio(argv)` and `MCPClient.http(url)` drive the handshake and turn the server's `tools/list` into bound Python callables with real signatures, docs, and defaults (`mk_tool`, the mirror of `get_schema`). Bound tools return reply text and raise on `isError`; `call_tool` returns the raw result. A stdio client may supply `on_request(method, params)` to answer server requests such as elicitation during a tool call. The HTTP transport also handles what other servers send that ours doesn't: SSE response bodies and `Mcp-Session-Id` minting, and its `delete` ends the server-side session as the spec asks of a finished client. Both directions are exercised against the official SDK's opposite half.
 
 Docs: https://AnswerDotAI.github.io/mcpmini/core.html.md"""
 
@@ -327,6 +327,9 @@ class HTTPTransport:
         if r.headers.get('content-type','').startswith('text/event-stream'):
             return first(m for m in sse_data(r.text) if m.get('id')==msg['id'])
         return r.json()
+    async def delete(self):
+        "End the server-side session with an HTTP DELETE; servers without session state may answer 405"
+        if self.sess: await self.client.delete(self.url, headers={**self.headers, 'Mcp-Session-Id': self.sess})
     async def aclose(self): await self.client.aclose()
 
 # %% ../nbs/00_core.ipynb #f76c6545
