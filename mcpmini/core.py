@@ -1,22 +1,28 @@
 """Serve Python functions as MCP tools, and call MCP servers
 
-Serve Python functions as MCP tools, and call any MCP server's tools as Python functions.
+Serve Python functions as MCP tools, or call another MCP server from Python.
 
 ## Serving tools
 
-A tool is a docmented Python function, sync or async: fastcore's `get_schema` turns its docments into the MCP `inputSchema`, so there is no registration ceremony beyond passing functions to `MCPServer`. The server core dispatches one message at a time without connection or session state. A tool served over stdio may call `MCPServer.elicit` for structured user input; the transport correlates that nested request while the original call remains active. `create_app` wraps the same server as a mountable ASGI app with one POST endpoint, and `serve_mcp` runs that under uvicorn.
+Pass sync or async functions to `MCPServer`. Fastcore's `get_schema` reads their docments to produce tool descriptions and `inputSchema`. No separate registration code is needed.
+
+The server dispatches message dictionaries without keeping a client session. Its stdio transport handles concurrent calls and nested requests. A tool can await `MCPServer.elicit` to ask for structured user input while its call remains active. For HTTP, `create_app` supplies a mountable ASGI app with one POST endpoint; `serve_mcp` runs it under uvicorn.
 
 ## Auth
 
-HTTP auth is a static bearer token checked by `auth_app`, raw ASGI middleware with a constant-time compare — no OAuth machinery. The policy lives in `serve_mcp`: a tool server is remote code execution, so a non-loopback bind refuses to start without a token (`$MCPMINI_TOKEN` or `token=`) unless `no_token=True` says auth lives elsewhere, e.g. a VPN.
+`auth_app` checks a static bearer token with a constant-time comparison. It is ASGI middleware, not an OAuth implementation. Treat access to your tools as permission to run their Python code. `serve_mcp` refuses a non-loopback bind without `token=` or `$MCPMINI_TOKEN`. Use `no_token=True` only when you provide protection elsewhere, such as a VPN or authenticating proxy.
 
 ## The command
 
-`mcpmini tools.py` serves a file of docmented functions over stdio — the argv shape MCP host configs launch — and `--transport http` with the flags of `serve_mcp` covers remote deployment; `load_server` is the same file-to-server step from Python. The file's docstring becomes the server's `instructions`.
+`mcpmini tools.py` serves a file's docmented functions over stdio. This is the command an MCP host can launch. Add `--transport http` and the deployment flags for HTTP. From Python, `load_server` performs the same file-to-server conversion. The file's docstring supplies the server instructions.
 
 ## Calling servers
 
-`MCPClient.stdio(argv)` and `MCPClient.http(url)` drive the handshake and turn the server's `tools/list` into bound Python callables with real signatures, docs, and defaults (`mk_tool`, the mirror of `get_schema`). Bound tools return reply text and raise on `isError`; `call_tool` returns the raw result. A stdio client may supply `on_request(method, params)` to answer server requests such as elicitation during a tool call. The HTTP transport also handles what other servers send that ours doesn't: SSE response bodies and `Mcp-Session-Id` minting, and its `delete` ends the server-side session as the spec asks of a finished client. Both directions are exercised against the official SDK's opposite half.
+Use `MCPClient.stdio(argv)` or `MCPClient.http(url)` as an async context manager. The client initializes the connection and binds `tools/list` entries as Python callables. Fastcore's `mk_tool` reconstructs their signatures, documentation, and defaults from the schemas.
+
+Bound tools return text and raise on `isError`. Use `call_tool` for the raw result, including non-text blocks. A stdio client's `on_request(method, params)` can answer nested requests such as elicitation. The HTTP client accepts JSON or SSE replies and returns a server-issued `Mcp-Session-Id` on later POSTs. Its `delete` method requests session termination when you no longer need a server-side session.
+
+The tests below pair each side with the official SDK. These cover the supported tool workflow, not every MCP feature or server.
 
 Docs: https://AnswerDotAI.github.io/mcpmini/core.html.md"""
 
@@ -316,11 +322,13 @@ class HTTPTransport:
         self.url,self.client,self.sess,self.proto = url,http_client,None,None
     async def start(self):
         if self.client is None: self.client = httpx.AsyncClient()
-    async def send(self, msg):
+    def _request_headers(self):
         h = dict(self.headers)
         if self.sess: h['Mcp-Session-Id'] = self.sess
         if self.proto: h['MCP-Protocol-Version'] = self.proto
-        r = await self.client.post(self.url, json=msg, headers=h)
+        return h
+    async def send(self, msg):
+        r = await self.client.post(self.url, json=msg, headers=self._request_headers())
         r.raise_for_status()
         if sid := r.headers.get('mcp-session-id'): self.sess = sid
         if 'id' not in msg: return None
@@ -328,8 +336,13 @@ class HTTPTransport:
             return first(m for m in sse_data(r.text) if m.get('id')==msg['id'])
         return r.json()
     async def delete(self):
-        "End the server-side session with an HTTP DELETE; servers without session state may answer 405"
-        if self.sess: await self.client.delete(self.url, headers={**self.headers, 'Mcp-Session-Id': self.sess})
+        "Request session termination and return the HTTP response, or None without a session."
+        if not self.sess: return
+        r = await self.client.delete(self.url, headers=self._request_headers())
+        if r.status_code == 405: return r
+        if r.status_code != 404: r.raise_for_status()
+        self.sess = None
+        return r
     async def aclose(self): await self.client.aclose()
 
 # %% ../nbs/00_core.ipynb #f76c6545
