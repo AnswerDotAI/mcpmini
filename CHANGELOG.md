@@ -2,6 +2,13 @@
 
 <!-- do not remove -->
 
+## 0.0.5
+
+### New Features
+
+- HTTPTransport: extract `_request_headers` and make delete return the response, clearing the session id on success or 404 ([#8](https://github.com/AnswerDotAI/mcpmini/issues/8))
+
+
 ## 0.0.4
 
 ### New Features
