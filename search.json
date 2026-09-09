@@ -1,0 +1,192 @@
+[
+  {
+    "objectID": "core.html",
+    "href": "core.html",
+    "title": "core",
+    "section": "",
+    "text": "Serve Python functions as MCP tools, or call another MCP server from Python.",
+    "crumbs": [
+      "core"
+    ]
+  },
+  {
+    "objectID": "core.html#serving-tools",
+    "href": "core.html#serving-tools",
+    "title": "core",
+    "section": "Serving tools",
+    "text": "Serving tools\nPass sync or async functions to MCPServer. Fastcore’s get_schema reads their docments to produce tool descriptions and inputSchema. No separate registration code is needed.\nThe server dispatches message dictionaries without keeping a client session. Its stdio transport handles concurrent calls and nested requests. A tool can await MCPServer.elicit to ask for structured user input while its call remains active. For HTTP, create_app supplies a mountable ASGI app with one POST endpoint; serve_mcp runs it under uvicorn.",
+    "crumbs": [
+      "core"
+    ]
+  },
+  {
+    "objectID": "core.html#auth",
+    "href": "core.html#auth",
+    "title": "core",
+    "section": "Auth",
+    "text": "Auth\nauth_app checks a static bearer token with a constant-time comparison. It is ASGI middleware, not an OAuth implementation. Treat access to your tools as permission to run their Python code. serve_mcp refuses a non-loopback bind without token= or $MCPMINI_TOKEN. Use no_token=True only when you provide protection elsewhere, such as a VPN or authenticating proxy.",
+    "crumbs": [
+      "core"
+    ]
+  },
+  {
+    "objectID": "core.html#the-command",
+    "href": "core.html#the-command",
+    "title": "core",
+    "section": "The command",
+    "text": "The command\nmcpmini tools.py serves a file’s docmented functions over stdio. This is the command an MCP host can launch. Add --transport http and the deployment flags for HTTP. From Python, load_server performs the same file-to-server conversion. The file’s docstring supplies the server instructions.",
+    "crumbs": [
+      "core"
+    ]
+  },
+  {
+    "objectID": "core.html#calling-servers",
+    "href": "core.html#calling-servers",
+    "title": "core",
+    "section": "Calling servers",
+    "text": "Calling servers\nUse MCPClient.stdio(argv) or MCPClient.http(url) as an async context manager. The client initializes the connection and binds tools/list entries as Python callables. Fastcore’s mk_tool reconstructs their signatures, documentation, and defaults from the schemas.\nBound tools return text and raise on isError. Use call_tool for the raw result, including non-text blocks. A stdio client’s on_request(method, params) can answer nested requests such as elicitation. The HTTP client accepts JSON or SSE replies and returns a server-issued Mcp-Session-Id on later POSTs. Its delete method requests session termination when you no longer need a server-side session.\nThe tests below pair each side with the official SDK. These cover the supported tool workflow, not every MCP feature or server.\nThis implementation negotiates the 2025-11-25, 2025-06-18, and 2025-03-26 protocol versions. They use an initialize handshake before ordinary JSON-RPC calls.\nThe 2026-07-28 revision removes that handshake and session header in favor of self-describing requests. Keeping connection handling outside dispatch makes that change easier to accommodate, but this code does not yet implement the new revision.\n\nfrom fastcore.test import *\nimport shutil, socket, tempfile",
+    "crumbs": [
+      "core"
+    ]
+  },
+  {
+    "objectID": "core.html#messages",
+    "href": "core.html#messages",
+    "title": "core",
+    "section": "Messages",
+    "text": "Messages\njreq builds a JSON-RPC request when you pass an id, or a notification without one. jtool builds a tools/call request and supplies an empty arguments object when no arguments are given.\n\n\nsource\n\njtool\ndef jtool(\n    name, id:int=1, **arguments\n):\nA tools/call request; omitted arguments become an empty object.\n\n\n\n\nsource\n\njreq\ndef jreq(\n    method, id:NoneType=None, **params\n):\nJSON-RPC request, or notification when id is None.\n\n\nUse jresp for a result and jerr for a JSON-RPC error reply.\n\n\nsource\n\njerr\ndef jerr(\n    id, code, message\n):\nJSON-RPC error reply; MCP uses -32601 for unknown methods, -32602 for bad params, -32603 for handler failures\n\n\n\n\nsource\n\njresp\ndef jresp(\n    id, result\n):\n\n\nStdio carries one JSON message per line. send_jmsg writes that line; recv_jmsg reads it and returns None at EOF.\n\n\nsource\n\nrecv_jmsg\nasync def recv_jmsg(\n    reader\n):\nRead one newline-delimited JSON message; None at EOF.\n\n\n\n\nsource\n\nsend_jmsg\nasync def send_jmsg(\n    writer, msg\n):\nWrite one newline-delimited JSON message.",
+    "crumbs": [
+      "core"
+    ]
+  },
+  {
+    "objectID": "core.html#tools-from-functions",
+    "href": "core.html#tools-from-functions",
+    "title": "core",
+    "section": "Tools from functions",
+    "text": "Tools from functions\nA tool is just a docmented function. Its name, docstring, annotations, and parameter comments give get_schema the information MCP needs. Pass pname='inputSchema' to use MCP’s name for the argument schema:\n\ndef fahrenheit(\n    celsius:float, # Temperature to convert\n)-&gt;float:\n    \"Convert Celsius to Fahrenheit\"\n    return celsius*9/5+32\n\nget_schema(fahrenheit, pname='inputSchema')\n\n{'name': 'fahrenheit',\n 'description': 'Convert Celsius to Fahrenheit\\n\\nReturns:\\n- type: number',\n 'inputSchema': {'type': 'object',\n  'properties': {'celsius': {'description': 'Temperature to convert',\n    'type': 'number'}},\n  'required': ['celsius']}}\n\n\nMCP tool results contain a list of content blocks. _content puts a string in one text block and uses repr for other values. This keeps Python’s representation, including quotes around nested strings. A dict with a content key passes through unchanged, allowing tools to return images or several blocks.\n\ntest_eq(_content('hi')['content'], [dict(type='text', text='hi')])\ntest_eq(_content(212.0)['content'][0]['text'], '212.0')\npassthru = dict(content=[dict(type='image', data='AAAA', mimeType='image/png')])\ntest_eq(_content(passthru), passthru)\n_content(dict(a=1))\n\n{'content': [{'type': 'text', 'text': \"{'a': 1}\"}], 'isError': False}",
+    "crumbs": [
+      "core"
+    ]
+  },
+  {
+    "objectID": "core.html#the-server",
+    "href": "core.html#the-server",
+    "title": "core",
+    "section": "The server",
+    "text": "The server\nMCPServer stores its name, version, optional model instructions, and the tools’ functions and schemas. Transports and tests both call dispatch with a message dict. The server keeps no client-session table. A context variable holds the transport callback for the current tool call.\n\n\nsource\n\nMCPServer\ndef MCPServer(\n    name, # Server name reported to clients\n    tools:tuple=(), # Functions (sync or async) exposed as tools, described by their docments\n    version:str='0.0.6', # Server version reported to clients\n    instructions:NoneType=None, # Optional guidance forwarded to the client's model\n):\nAn MCP tool server: dispatch maps one message dict to one reply dict\n\n\ninitialize echoes a supported version or offers the newest entry in PROTO_VERSIONS. Unknown tool names receive JSON-RPC errors. Exceptions raised by tools instead return a traceback in content with isError=True, where the model can read and respond to the failure.\n\n\nsource\n\nMCPServer.dispatch\nasync def dispatch(\n    msg, requester:NoneType=None\n):\nThe reply dict for one JSON-RPC message dict; None for notifications\n\n\nOur demo server converts temperatures, takes an async nap, and crashes on demand. The initialization tests request one supported version and one unsupported version:\n\nasync def nap(\n    ms:int=1, # How long to sleep, in milliseconds\n)-&gt;str:\n    \"Sleep, then report back\"\n    await asyncio.sleep(ms/1000)\n    return f'napped {ms}ms'\n\ndef crash()-&gt;str:\n    \"Always fails\"\n    return 1/0\n\nsrv = MCPServer('demo', [fahrenheit, nap, crash], instructions='Convert temperatures on request.')\ninit = await srv.dispatch(jreq('initialize', 1, protocolVersion='2025-06-18', capabilities={}, clientInfo=dict(name='t', version='0')))\ntest_eq(init['result']['protocolVersion'], '2025-06-18')\nold = await srv.dispatch(jreq('initialize', 2, protocolVersion='2024-11-05'))\ntest_eq(old['result']['protocolVersion'], PROTO_VERSIONS[0])\ninit['result']\n\n{'protocolVersion': '2025-06-18',\n 'capabilities': {'tools': {}},\n 'serverInfo': {'name': 'demo', 'version': '0.0.5'},\n 'instructions': 'Convert temperatures on request.'}\n\n\nBoth synchronous functions and coroutines return MCP content blocks through tools/call:\n\nfahrenheit_reply = await srv.dispatch(jtool('fahrenheit', celsius=100))\nnap_reply = await srv.dispatch(jtool('nap', ms=2))\ntexts = [r['result']['content'][0]['text'] for r in (fahrenheit_reply, nap_reply)]\ntest_eq(texts, ['212.0','napped 2ms'])\ntexts\n\n['212.0', 'napped 2ms']\n\n\nCalling crash returns its traceback as a tool result, not a JSON-RPC error:\n\nboom = (await srv.dispatch(jtool('crash')))['result']\nassert boom['isError'] and 'ZeroDivisionError' in boom['content'][0]['text']\nboom\n\n{'content': [{'type': 'text',\n   'text': 'Traceback (most recent call last):\\n  File \"&lt;ipython-input-11-171bf1eed883&gt;\", line 5, in _acall\\n    res = f(**args)\\n  File \"&lt;ipython-input-12-2bcae28d6802&gt;\", line 10, in crash\\n    return 1/0\\n           ~^~\\nZeroDivisionError: division by zero\\n'}],\n 'isError': True}",
+    "crumbs": [
+      "core"
+    ]
+  },
+  {
+    "objectID": "core.html#stdio",
+    "href": "core.html#stdio",
+    "title": "core",
+    "section": "stdio",
+    "text": "stdio\nserve_stdio reads newline-delimited JSON until EOF. A malformed JSON line receives error -32700 with a null id, since no request id is available. Notifications receive no reply. You can supply asyncio streams or use the default stdin and stdout.\nFor tests, stdio_peer connects the server and a small StdioPeer client through a socketpair. The helper handles setup and shutdown; the messages still use the real wire format.\n\n\nsource\n\nstdio_peer\ndef stdio_peer(\n    srv\n):\nAn in-process StdioPeer speaking the real newline-delimited wire protocol to srv.\n\n\n\n\nsource\n\nStdioPeer\ndef StdioPeer(\n    reader, writer\n):\nA small JSON-RPC peer connected to serve_stdio, for examples and protocol tests.\n\n\n\n\nsource\n\nserve_stdio\nasync def serve_stdio(\n    srv, # `MCPServer` to serve\n    reader:NoneType=None, # asyncio stream to read messages from; stdin if None\n    writer:NoneType=None, # asyncio stream to write replies to; stdout if None\n):\nServe srv over newline-delimited JSON-RPC until EOF, dispatching messages concurrently\n\n\nThe peer calls a tool, sends malformed JSON, then pings the server. The parse error does not prevent the ping from succeeding. Closing the peer ends the server task:\n\nasync with stdio_peer(srv) as peer:\n    r = await peer.call('fahrenheit', celsius=0)\n    test_eq(r['result']['content'][0]['text'], '32.0')\n    await peer.send_raw(b'not json\\n')\n    await peer.send_request('ping')\n    test_eq((await peer.recv())['error']['code'], -32700)\n    test_eq((await peer.recv())['result'], {})\nr\n\n{'jsonrpc': '2.0',\n 'id': 1,\n 'result': {'content': [{'type': 'text', 'text': '32.0'}], 'isError': False}}\n\n\nA tool can need more information before it can finish. Await MCPServer.elicit to ask the client for structured input without ending the tool call. It sends elicitation/create through that call’s transport and returns the client’s response. The tool can then continue as ordinary sequential code. Here it asks for a name before returning a greeting:\n\nasync def greeting()-&gt;str:\n    \"Ask for a name, then greet it\"\n    r = await interactive.elicit('Who?', dict(type='object', properties=dict(name=dict(type='string')), required=['name']))\n    return f\"Hello {r['content']['name']}\"\n\ninteractive = MCPServer('interactive', [greeting])\n\nThe client answers the nested request before it receives the greeting. A reply has no method; serve_stdio matches its id to the pending server request:\n\nasync with stdio_peer(interactive) as peer:\n    await peer.send_call('greeting')\n    prompt = await peer.recv()\n    test_eq(prompt['method'], 'elicitation/create')\n    await peer.reply(prompt, dict(action='accept', content=dict(name='Ada')))\n    greeting_res = await peer.recv()\ntest_eq(greeting_res['result']['content'][0]['text'], 'Hello Ada')\ngreeting_res\n\n{'jsonrpc': '2.0',\n 'id': 1,\n 'result': {'content': [{'type': 'text', 'text': 'Hello Ada'}],\n  'isError': False}}\n\n\nThe stdio loop starts a task for each request. The short nap can finish while the long nap is awaiting sleep. This also lets an interrupt tool run alongside an async execute tool on the same connection. A synchronous tool that blocks the event loop does not yield that opportunity:\n\nasync with stdio_peer(srv) as peer:\n    await peer.send_call('nap', ms=300)\n    await peer.send_call('nap', ms=1)\n    replies = [await peer.recv() for _ in range(2)]\ntest_eq([r['id'] for r in replies], [2, 1])",
+    "crumbs": [
+      "core"
+    ]
+  },
+  {
+    "objectID": "core.html#streamable-http",
+    "href": "core.html#streamable-http",
+    "title": "core",
+    "section": "Streamable HTTP",
+    "text": "Streamable HTTP\ncreate_app exposes one POST endpoint, /mcp by default. It returns JSON for requests and HTTP 202 for notifications. It creates no Mcp-Session-Id and ignores an incoming one. GET returns 405; there is no server-push stream.\nThe 2025 transport specification allows a JSON reply instead of SSE and permits 405 when a server does not offer a GET stream. Our HTTP server does not send progress notifications or nested requests.\nauth_app wraps any ASGI app. It checks the bearer token before calling that app, protecting all HTTP routes beneath it. The comparison is constant-time. This middleware handles static-token authentication, not OAuth. A deployment still needs transport security and protection against untrusted origins.\n\n\nsource\n\ncreate_app\ndef create_app(\n    srv, # `MCPServer` to expose\n    token:NoneType=None, # Bearer token required on every request; open if None\n    path:str='/mcp', # Endpoint path\n):\nASGI app serving srv over streamable HTTP\n\n\n\n\nsource\n\nauth_app\ndef auth_app(\n    app, # ASGI app to guard\n    token, # The bearer token every request must carry\n):\nWrap app to reject requests whose Authorization bearer token doesn’t match token\n\n\nhttpx.ASGITransport tests the app without a socket. Missing and wrong tokens get 401 before JSON parsing. The correct token permits a tool call. Authenticated GET gets 405 and a notification gets 202:\n\napp = create_app(srv, token='sesame')\nasync def hpost(msg, token=None, meth='POST'):\n    hdrs = {'Authorization': f'Bearer {token}'} if token else {}\n    async with httpx.AsyncClient(transport=httpx.ASGITransport(app), base_url='http://t') as c:\n        return await c.request(meth, '/mcp', json=msg, headers=hdrs)\nping = jreq('ping', 1)\ntest_eq((await hpost(ping)).status_code, 401)\ntest_eq((await hpost(ping, 'wrong')).status_code, 401)\ntest_eq((await hpost(ping)).headers['www-authenticate'], 'Bearer')\ntest_eq((await hpost(ping, 'sesame')).json()['result'], {})\ntest_eq((await hpost(ping, 'sesame', meth='GET')).status_code, 405)\ntest_eq((await hpost(jreq('notifications/initialized'), 'sesame')).status_code, 202)\n(await hpost(jtool('fahrenheit', 2, celsius=37), 'sesame')).json()\n\n{'jsonrpc': '2.0',\n 'id': 2,\n 'result': {'content': [{'type': 'text', 'text': '98.6'}], 'isError': False}}",
+    "crumbs": [
+      "core"
+    ]
+  },
+  {
+    "objectID": "core.html#serving",
+    "href": "core.html#serving",
+    "title": "core",
+    "section": "Serving",
+    "text": "Serving\nA tool server lets its clients run your Python functions. serve_mcp therefore requires a token for a non-loopback bind. Set no_token=True only when something else protects access, such as a VPN or fronting proxy.\nThis check belongs to serve_mcp, not create_app: applications that mount the latter must arrange their own protection. Jupyter’s old tokenless default is the cautionary tale here.\n\n\nsource\n\nserve_mcp\nasync def serve_mcp(\n    srv, # `MCPServer` to serve\n    host:str='127.0.0.1', # Interface to bind\n    port:int=8000, # Port to bind\n    token:NoneType=None, # Bearer token; `$MCPMINI_TOKEN` if None\n    no_token:bool=False, # Serve a non-loopback interface openly, when auth lives elsewhere (e.g. a VPN)\n    *, path:str='/mcp', # Endpoint path\n):\nServe srv over streamable HTTP; non-loopback binds require a token unless no_token\n\n\nAn unprotected non-loopback bind raises before opening a socket. Loopback binds may omit the token. For the client examples, however, we start a loopback server with the token sesame:\n\nwith expect_fail(ValueError): await serve_mcp(srv, host='0.0.0.0')\n\ndef free_port():\n    with socket.socket() as s:\n        s.bind(('127.0.0.1', 0))\n        return s.getsockname()[1]\n\nport = free_port()\nserver_task = asyncio.create_task(serve_mcp(srv, port=port, token='sesame'))\nurl = f'http://127.0.0.1:{port}/mcp'\nfor _ in range(100):\n    try:\n        with socket.create_connection(('127.0.0.1', port), timeout=0.5): break\n    except OSError: await asyncio.sleep(0.05)\nurl\n\n'http://127.0.0.1:56405/mcp'",
+    "crumbs": [
+      "core"
+    ]
+  },
+  {
+    "objectID": "core.html#the-client",
+    "href": "core.html#the-client",
+    "title": "core",
+    "section": "The client",
+    "text": "The client\nOther servers can return SSE bodies or assign session ids even though ours does neither. The HTTP client accepts both JSON and SSE. After initialization, its POSTs include the negotiated MCP-Protocol-Version and any server-issued Mcp-Session-Id.\nsse_data parses a complete SSE body. Blank lines separate events; an event’s data: lines combine into one JSON message.\n\n\nsource\n\nsse_data\ndef sse_data(\n    text\n):\nJSON messages from the data: lines of SSE body text\n\n\n\ntest_eq(sse_data('event: message\\ndata: {\"a\": 1}\\n\\n: keepalive\\n\\ndata: {\"b\":\\ndata:  2}\\n\\n'), [dict(a=1), dict(b=2)])\n\nEach transport’s send takes a message dict and returns its reply, or None for a notification. StdioTransport starts a subprocess. While waiting for a reply, it answers server requests through the sync or async on_request callback. It then continues waiting for the original request id.\n\n\nsource\n\nStdioTransport\ndef StdioTransport(\n    argv, # Server command line, e.g. `['mymcp', '--flag']`\n    env:NoneType=None, # Environment for the subprocess; inherited if None\n    cwd:NoneType=None, # Working directory for the subprocess; inherited if None\n    on_request:NoneType=None, # Sync or async `(method, params)` handler for a server request received during a client request\n):\nJSON-RPC to a subprocess over its stdin/stdout\n\n\nHTTPTransport sends one POST per message. For SSE, it parses the response body and selects the message with the matching id.\nCall delete when you no longer need the server-side session. It returns the HTTP response, or None when no session id is set. Success and 404 clear the id. A 405 response leaves it in place because the server refused termination. Other HTTP errors raise. aclose closes the HTTP client without requesting session termination.\n\n\nsource\n\nHTTPTransport\ndef HTTPTransport(\n    url, # The MCP endpoint, e.g. 'http://127.0.0.1:8000/mcp'\n    token:NoneType=None, # Bearer token to send with every request\n    http_client:NoneType=None, # An `httpx.AsyncClient` to use, e.g. over `httpx.ASGITransport`; a fresh one if None\n):\nJSON-RPC to a streamable HTTP endpoint, one POST per message\n\n\nMCPClient.start initializes the transport, sends notifications/initialized, and fetches tools/list. mk_tool builds the callables in client.tools from those schemas, reversing the server’s get_schema conversion.\nA bound tool calls call_text, which joins text blocks and raises RuntimeError for a tool error. Use call_tool when you need the complete result dict. JSON-RPC errors raise in rpc.\n\n\nsource\n\nMCPClient\ndef MCPClient(\n    tr, # A transport: `StdioTransport`, `HTTPTransport`, or compatible\n):\nCall an MCP server’s tools as Python functions\n\n\nWe can now call the remote converter as a Python function. Its signature and docs come from the server’s schema, with parameter descriptions in Annotated metadata. Passing it back to get_schema recovers the original argument schema. The client also receives the server instructions.\nThe example calls the converter and uses the async tool’s default argument. It then shows how a tool exception and an unknown tool name reach the Python caller:\n\nasync with MCPClient.http(url, token='sesame') as c:\n    test_eq(c.info['serverInfo']['name'], 'demo')\n    test_eq(c.info['instructions'], 'Convert temperatures on request.')\n    test_eq(list(inspect.signature(c.tools.fahrenheit).parameters), ['celsius'])\n    test_eq(get_schema(c.tools.fahrenheit, pname='inputSchema')['inputSchema'], srv.specs[0]['inputSchema'])\n    test_eq(await c.tools.fahrenheit(celsius=100), '212.0')\n    test_eq(await c.tools.nap(), 'napped 1ms')\n    with expect_fail(RuntimeError, contains='ZeroDivisionError'): await c.tools.crash()\n    with expect_fail(RuntimeError, contains='-32602'): await c.call_tool('flux')\n    doc_line = c.tools.fahrenheit.__doc__\ndoc_line\n\n'Convert Celsius to Fahrenheit\\n\\nReturns:\\n- type: number'\n\n\nNow launch a stdio server in a subprocess, as an MCP host would. The temporary script imports the exported module and defines its own converter; it cannot use this notebook’s in-memory function:\n\nserverfile = Path(tempfile.mkdtemp())/'demo_stdio.py'\nserverfile.write_text('''import asyncio\nfrom mcpmini.core import MCPServer, serve_stdio\n\ndef fahrenheit(\n    celsius:float, # Temperature to convert\n)-&gt;float:\n    \"Convert Celsius to Fahrenheit\"\n    return celsius*9/5+32\n\nasyncio.run(serve_stdio(MCPServer('demo-stdio', [fahrenheit])))\n''')\nasync with MCPClient.stdio([sys.executable, str(serverfile)]) as c:\n    test_eq(c.info['serverInfo']['name'], 'demo-stdio')\n    res = await c.tools.fahrenheit(celsius=-40)\nres\n\n'-40.0'",
+    "crumbs": [
+      "core"
+    ]
+  },
+  {
+    "objectID": "core.html#interop",
+    "href": "core.html#interop",
+    "title": "core",
+    "section": "Interop",
+    "text": "Interop\nTalking to ourselves is not enough to establish compatibility. First, the official SDK client initializes our HTTP server, lists its tools, and calls the converter. streams[:2] takes the two streams without depending on the optional session-id callback returned by older SDK versions:\n\nfrom mcp import ClientSession\nfrom mcp.client.streamable_http import streamable_http_client, create_mcp_http_client\n\n\nasync with create_mcp_http_client(headers={'Authorization': 'Bearer sesame'}) as hc, \\\n        streamable_http_client(url, http_client=hc) as streams, \\\n        ClientSession(*streams[:2]) as s:\n    sdk_init = await s.initialize()\n    test_eq({t.name for t in (await s.list_tools()).tools}, {'fahrenheit','nap','crash'})\n    sdk_res = await s.call_tool('fahrenheit', dict(celsius=100))\ntest_eq(sdk_res.content[0].text, '212.0')\nsdk_init.serverInfo\n\nImplementation(name='demo', title=None, version='0.0.5', websiteUrl=None, icons=None)\n\n\nIn the other direction, our client calls an SDK FastMCP server. This setup returns SSE and creates a session id. The client sends the id with subsequent requests. After calling the tool, it ends the server session explicitly before closing its HTTP connection:\n\nimport logging, uvicorn\nfrom mcp.server.fastmcp import FastMCP\n\n\nlogging.getLogger('mcp').setLevel(logging.WARNING)\nfm = FastMCP('sdkdemo')\n@fm.tool()\ndef double(x: int) -&gt; int:\n    \"Twice `x`\"\n    return x*2\n\nport2 = free_port()\nsdk_task = asyncio.create_task(uvicorn.Server(uvicorn.Config(fm.streamable_http_app(), host='127.0.0.1', port=port2, log_level='warning')).serve())\nfor _ in range(100):\n    try:\n        with socket.create_connection(('127.0.0.1', port2), timeout=0.5): break\n    except OSError: await asyncio.sleep(0.05)\nasync with MCPClient.http(f'http://127.0.0.1:{port2}/mcp') as c:\n    test_eq(c.info['serverInfo']['name'], 'sdkdemo')\n    assert c.tr.sess, 'SDK server should have minted a session id'\n    dbl = await c.tools.double(x=21)\n    await c.tr.delete()\n    assert c.tr.sess is None\ndbl\n\n[09/09/26 18:40:43] INFO     HTTP Request: POST                  _client.py:1740\n                             http://127.0.0.1:56411/mcp                         \n                             \"HTTP/1.1 200 OK\"                                  \n                    INFO     HTTP Request: POST                  _client.py:1740\n                             http://127.0.0.1:56411/mcp                         \n                             \"HTTP/1.1 202 Accepted\"                            \n                    INFO     HTTP Request: POST                  _client.py:1740\n                             http://127.0.0.1:56411/mcp                         \n                             \"HTTP/1.1 200 OK\"                                  \n                    INFO     HTTP Request: POST                  _client.py:1740\n                             http://127.0.0.1:56411/mcp                         \n                             \"HTTP/1.1 200 OK\"                                  \n\n\n'42'",
+    "crumbs": [
+      "core"
+    ]
+  },
+  {
+    "objectID": "core.html#the-mcpmini-command",
+    "href": "core.html#the-mcpmini-command",
+    "title": "core",
+    "section": "The mcpmini command",
+    "text": "The mcpmini command\nAn MCP host needs a command to launch. mcpmini tools.py loads and serves a Python file without a wrapper script. The file stem names the server, and its docstring supplies the instructions.\nA nonempty __all__ selects the objects to serve. Without it, load_server selects functions defined in that module. Either way, it removes names beginning with _. Loading the file executes its top-level code.\n\n\nsource\n\nload_server\ndef load_server(\n    path, # Python file whose public docmented functions become the tools\n):\nAn MCPServer for the file at path: named after it, instructed by its docstring, serving its functions\n\n\nThis file defines a public converter, a private helper, and an import. With no __all__, only the converter becomes a tool. Imported helpers are not tools by default; an explicit __all__ can include them:\n\ntoolsfile = Path(tempfile.mkdtemp())/'weather.py'\ntoolsfile.write_text(\"\"\"\"Answer weather questions.\"\nfrom json import dumps\n\ndef _secret(): pass\n\ndef celsius(\n    fahrenheit:float, # Temperature to convert\n)-&gt;float:\n    \"Convert Fahrenheit to Celsius\"\n    return (fahrenheit-32)*5/9\n\"\"\")\nwsrv = load_server(toolsfile)\ntest_eq((wsrv.name, list(wsrv.funcs), wsrv.instructions), ('weather', ['celsius'], 'Answer weather questions.'))\nwsrv.specs\n\n[{'name': 'celsius',\n  'description': 'Convert Fahrenheit to Celsius\\n\\nReturns:\\n- type: number',\n  'inputSchema': {'type': 'object',\n   'properties': {'fahrenheit': {'description': 'Temperature to convert',\n     'type': 'number'}},\n   'required': ['fahrenheit']}}]\n\n\ncall_parse turns main’s docments into the CLI. Stdio is the default. HTTP deployment uses --transport http, --host, --port, and --path. Supply the token with --token or $MCPMINI_TOKEN; --no-token opts out of the non-loopback protection. streamable-http is another accepted transport spelling.\n\n\nsource\n\nmain\ndef main(\n    tools:str, # Python file whose public docmented functions are served\n    transport:str='stdio', # 'stdio', or 'http' for streamable HTTP\n    host:str='127.0.0.1', # Interface to bind, for http\n    port:int=8000, # Port to bind, for http\n    token:str=None, # Bearer token, for http; `$MCPMINI_TOKEN` if unset\n    no_token:bool=False, # Serve http on a non-loopback interface openly, when auth lives elsewhere\n    path:str='/mcp', # Endpoint path, for http\n):\nServe a Python file’s docmented functions as an MCP server\n\n\nThis time the client launches the installed mcpmini command with the tools file as its argument. We check that the instructions reach the client and that the converter returns the expected value:\n\ncmd = shutil.which('mcpmini')\nassert cmd, 'mcpmini console script not installed: run `uv sync`'\nasync with MCPClient.stdio([cmd, str(toolsfile)]) as c:\n    test_eq(c.info['instructions'], 'Answer weather questions.')\n    freezing = await c.tools.celsius(fahrenheit=32)\nfreezing\n\n'0.0'",
+    "crumbs": [
+      "core"
+    ]
+  },
+  {
+    "objectID": "core.html#a-live-client",
+    "href": "core.html#a-live-client",
+    "title": "core",
+    "section": "A live client",
+    "text": "A live client\nSDK interoperability does not tell us whether a model host will discover and use the tool. This disabled example uses the Claude Agent SDK to run Claude Code headlessly. Claude launches mcpmini, discovers the converter, and calls it.\nChecking the answer alone would miss a model doing the conversion itself. The assertion checks the actual tool_use name as well. These cells spend model tokens and do not run in automated tests.\n\nfrom claude_agent_sdk import query, ClaudeAgentOptions, AssistantMessage, ResultMessage\n\n\nlogging.getLogger('claude_agent_sdk').setLevel(logging.WARNING)\nlive_tools = Path(tempfile.mkdtemp())/'weather.py'\nlive_tools.write_text(toolsfile.read_text())\nopts = ClaudeAgentOptions(model='haiku', max_turns=3, tools=[], setting_sources=[], strict_mcp_config=True,\n    mcp_servers=dict(demo=dict(type='stdio', command=shutil.which('mcpmini'), args=[str(live_tools)])),\n    allowed_tools=['mcp__demo__celsius'], system_prompt='Use the tools you are given.')\nmsgs = [m async for m in query(prompt='Convert 212 fahrenheit to celsius with the celsius tool. Reply with only the number.', options=opts)]\ntus = [b.name for m in msgs if isinstance(m, AssistantMessage) for b in m.content if getattr(b,'name',None)]\nres = first(m.result for m in msgs if isinstance(m, ResultMessage))\ntest_eq(tus, ['mcp__demo__celsius'])\nassert '100' in res\nres\n\n'100.0'\n\n\nThe HTTP version supplies a URL and an Authorization header instead of a subprocess command. The server could also run on another machine. To record that connection in Claude Code, claude mcp add --transport http accepts the URL and --header option. This example still uses loopback and also spends model tokens.\n\nlive_port = free_port()\nlive_task = asyncio.create_task(serve_mcp(wsrv, port=live_port, token='sesame'))\nawait asyncio.sleep(0.2)\nhopts = ClaudeAgentOptions(model='haiku', max_turns=3, tools=[], setting_sources=[], strict_mcp_config=True,\n    mcp_servers=dict(demo=dict(type='http', url=f'http://127.0.0.1:{live_port}/mcp', headers={'Authorization': 'Bearer sesame'})),\n    allowed_tools=['mcp__demo__celsius'], system_prompt='Use the tools you are given.')\nhmsgs = [m async for m in query(prompt='Convert 451 fahrenheit to celsius with the celsius tool. Reply with only the number.', options=hopts)]\nhtus = [b.name for m in hmsgs if isinstance(m, AssistantMessage) for b in m.content if getattr(b,'name',None)]\nhres = first(m.result for m in hmsgs if isinstance(m, ResultMessage))\nlive_task.cancel()\ntest_eq(htus, ['mcp__demo__celsius'])\nassert '232' in hres\nhres\n\n'232.78'",
+    "crumbs": [
+      "core"
+    ]
+  },
+  {
+    "objectID": "core.html#cleanup",
+    "href": "core.html#cleanup",
+    "title": "core",
+    "section": "Cleanup",
+    "text": "Cleanup\nCancel both loopback servers and wait for their tasks to finish.\n\nfor t in (server_task, sdk_task): t.cancel()\nres = await asyncio.gather(server_task, sdk_task, return_exceptions=True)",
+    "crumbs": [
+      "core"
+    ]
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "mcpmini",
+    "section": "",
+    "text": "mcpmini is a small, readable MCP server and client library. It exposes Python functions as tools over stdio or streamable HTTP, deriving their schemas from signatures and parameter documentation. Its client exposes remote tools as Python callables with reconstructed signatures, documentation, and defaults.",
+    "crumbs": [
+      "mcpmini"
+    ]
+  },
+  {
+    "objectID": "index.html#usage",
+    "href": "index.html#usage",
+    "title": "mcpmini",
+    "section": "Usage",
+    "text": "Usage\n\nInstallation\npip install mcpmini",
+    "crumbs": [
+      "mcpmini"
+    ]
+  },
+  {
+    "objectID": "index.html#how-to-use",
+    "href": "index.html#how-to-use",
+    "title": "mcpmini",
+    "section": "How to use",
+    "text": "How to use\nDefine a Python function with type annotations and docments, the comments beside parameters. mcpmini uses these to build the tool schema. Pass the functions to MCPServer:\n\nfrom mcpmini.core import MCPServer, MCPClient, serve_stdio, serve_mcp\nimport asyncio, socket\n\n\ndef fahrenheit(\n    celsius:float, # Temperature to convert\n)-&gt;float:\n    \"Convert Celsius to Fahrenheit\"\n    return celsius*9/5+32\n\nsrv = MCPServer('demo', [fahrenheit])\n\nChoose a transport for the server:\n\nasyncio.run(serve_stdio(srv)) serves it over stdio for an MCP host to launch.\nasyncio.run(serve_mcp(srv, port=8000, token='S')) serves it over streamable HTTP with bearer-token authentication. A non-loopback bind requires a token unless no_token=True explicitly disables that requirement.\n\nOn stdio, a tool can call await srv.elicit(message, schema) to request structured input while its tool call remains active. A client created with MCPClient.stdio(..., on_request=handler) supplies the answer.\nThe CLI serves functions from a file:\nmcpmini tools.py\nmcpmini tools.py --transport http --port 8000\nUse these commands in an MCP host’s server configuration. To connect Claude Code to the HTTP server configured with token S above:\nclaude mcp add --transport http demo http://127.0.0.1:8000/mcp -H \"Authorization: Bearer S\"\nMCPClient exposes server tools as bound Python functions. The following example starts a local server and calls its fahrenheit tool:\n\ndef free_port():\n    with socket.socket() as s:\n        s.bind(('127.0.0.1', 0))\n        return s.getsockname()[1]\nport = free_port()\ntask = asyncio.create_task(serve_mcp(srv, port=port, token='S'))\nawait asyncio.sleep(0.2)\nasync with MCPClient.http(f'http://127.0.0.1:{port}/mcp', token='S') as c: res = await c.tools.fahrenheit(celsius=100)\ntask.cancel()\nres\n\n'212.0'",
+    "crumbs": [
+      "mcpmini"
+    ]
+  }
+]

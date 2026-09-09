@@ -1,0 +1,1315 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="description" content="Serve Python functions as MCP tools, and call MCP servers">
+
+<title>core – mcpmini</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-5ff355f32169432f12e3b54c979a24ba.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+<link rel="stylesheet" href="styles.css">
+<meta property="og:title" content="core – mcpmini">
+<meta property="og:description" content="Serve Python functions as MCP tools, and call MCP servers">
+<meta property="og:site_name" content="mcpmini">
+<meta name="twitter:title" content="core – mcpmini">
+<meta name="twitter:description" content="Serve Python functions as MCP tools, and call MCP servers">
+<meta name="twitter:card" content="summary">
+</head>
+
+<body class="nav-sidebar floating nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="./index.html">
+    <span class="navbar-title">mcpmini</span>
+    </a>
+  </div>
+        <div class="quarto-navbar-tools tools-end">
+</div>
+          <div id="quarto-search" class="" title="Search"></div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./core.html">core</a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">mcpmini</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./core.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">core</span></a>
+  </div>
+</li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#serving-tools" id="toc-serving-tools" class="nav-link active" data-scroll-target="#serving-tools">Serving tools</a></li>
+  <li><a href="#auth" id="toc-auth" class="nav-link" data-scroll-target="#auth">Auth</a></li>
+  <li><a href="#the-command" id="toc-the-command" class="nav-link" data-scroll-target="#the-command">The command</a></li>
+  <li><a href="#calling-servers" id="toc-calling-servers" class="nav-link" data-scroll-target="#calling-servers">Calling servers</a></li>
+  <li><a href="#messages" id="toc-messages" class="nav-link" data-scroll-target="#messages">Messages</a></li>
+  <li><a href="#tools-from-functions" id="toc-tools-from-functions" class="nav-link" data-scroll-target="#tools-from-functions">Tools from functions</a></li>
+  <li><a href="#the-server" id="toc-the-server" class="nav-link" data-scroll-target="#the-server">The server</a></li>
+  <li><a href="#stdio" id="toc-stdio" class="nav-link" data-scroll-target="#stdio">stdio</a></li>
+  <li><a href="#streamable-http" id="toc-streamable-http" class="nav-link" data-scroll-target="#streamable-http">Streamable HTTP</a></li>
+  <li><a href="#serving" id="toc-serving" class="nav-link" data-scroll-target="#serving">Serving</a></li>
+  <li><a href="#the-client" id="toc-the-client" class="nav-link" data-scroll-target="#the-client">The client</a></li>
+  <li><a href="#interop" id="toc-interop" class="nav-link" data-scroll-target="#interop">Interop</a></li>
+  <li><a href="#the-mcpmini-command" id="toc-the-mcpmini-command" class="nav-link" data-scroll-target="#the-mcpmini-command">The mcpmini command</a></li>
+  <li><a href="#a-live-client" id="toc-a-live-client" class="nav-link" data-scroll-target="#a-live-client">A live client</a></li>
+  <li><a href="#cleanup" id="toc-cleanup" class="nav-link" data-scroll-target="#cleanup">Cleanup</a></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/AnswerDotAI/mcpmini/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div><div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="core.html.md"><i class="bi bi-file-code"></i>Markdown</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">core</h1>
+</div>
+
+<div>
+  <div class="description">
+    Serve Python functions as MCP tools, and call MCP servers
+  </div>
+</div>
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<!-- WARNING: THIS FILE WAS AUTOGENERATED! DO NOT EDIT! -->
+<p>Serve Python functions as MCP tools, or call another MCP server from Python.</p>
+<section id="serving-tools" class="level2">
+<h2 class="anchored" data-anchor-id="serving-tools">Serving tools</h2>
+<p>Pass sync or async functions to <a href="https://AnswerDotAI.github.io/mcpmini/core.html#mcpserver"><code>MCPServer</code></a>. Fastcore’s <code>get_schema</code> reads their docments to produce tool descriptions and <code>inputSchema</code>. No separate registration code is needed.</p>
+<p>The server dispatches message dictionaries without keeping a client session. Its stdio transport handles concurrent calls and nested requests. A tool can await <a href="https://AnswerDotAI.github.io/mcpmini/core.html#mcpserver.elicit"><code>MCPServer.elicit</code></a> to ask for structured user input while its call remains active. For HTTP, <a href="https://AnswerDotAI.github.io/mcpmini/core.html#create_app"><code>create_app</code></a> supplies a mountable ASGI app with one POST endpoint; <a href="https://AnswerDotAI.github.io/mcpmini/core.html#serve_mcp"><code>serve_mcp</code></a> runs it under uvicorn.</p>
+</section>
+<section id="auth" class="level2">
+<h2 class="anchored" data-anchor-id="auth">Auth</h2>
+<p><a href="https://AnswerDotAI.github.io/mcpmini/core.html#auth_app"><code>auth_app</code></a> checks a static bearer token with a constant-time comparison. It is ASGI middleware, not an OAuth implementation. Treat access to your tools as permission to run their Python code. <a href="https://AnswerDotAI.github.io/mcpmini/core.html#serve_mcp"><code>serve_mcp</code></a> refuses a non-loopback bind without <code>token=</code> or <code>$MCPMINI_TOKEN</code>. Use <code>no_token=True</code> only when you provide protection elsewhere, such as a VPN or authenticating proxy.</p>
+</section>
+<section id="the-command" class="level2">
+<h2 class="anchored" data-anchor-id="the-command">The command</h2>
+<p><code>mcpmini tools.py</code> serves a file’s docmented functions over stdio. This is the command an MCP host can launch. Add <code>--transport http</code> and the deployment flags for HTTP. From Python, <a href="https://AnswerDotAI.github.io/mcpmini/core.html#load_server"><code>load_server</code></a> performs the same file-to-server conversion. The file’s docstring supplies the server instructions.</p>
+</section>
+<section id="calling-servers" class="level2">
+<h2 class="anchored" data-anchor-id="calling-servers">Calling servers</h2>
+<p>Use <code>MCPClient.stdio(argv)</code> or <code>MCPClient.http(url)</code> as an async context manager. The client initializes the connection and binds <code>tools/list</code> entries as Python callables. Fastcore’s <code>mk_tool</code> reconstructs their signatures, documentation, and defaults from the schemas.</p>
+<p>Bound tools return text and raise on <code>isError</code>. Use <code>call_tool</code> for the raw result, including non-text blocks. A stdio client’s <code>on_request(method, params)</code> can answer nested requests such as elicitation. The HTTP client accepts JSON or SSE replies and returns a server-issued <code>Mcp-Session-Id</code> on later POSTs. Its <code>delete</code> method requests session termination when you no longer need a server-side session.</p>
+<p>The tests below pair each side with the official SDK. These cover the supported tool workflow, not every MCP feature or server.</p>
+<p>This implementation negotiates the <code>2025-11-25</code>, <code>2025-06-18</code>, and <code>2025-03-26</code> protocol versions. They use an <code>initialize</code> handshake before ordinary JSON-RPC calls.</p>
+<p>The <a href="https://blog.modelcontextprotocol.io/posts/2026-07-28/">2026-07-28 revision</a> removes that handshake and session header in favor of self-describing requests. Keeping connection handling outside <code>dispatch</code> makes that change easier to accommodate, but this code does not yet implement the new revision.</p>
+<div id="aa5a23c6" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-09T11:58:20.872584+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-09T11:58:20.873552+00:00&quot;,&quot;total&quot;:0.0009701640000230327}}" data-execution_count="2">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> fastcore.test <span class="im">import</span> <span class="op">*</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> shutil, socket, tempfile</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="messages" class="level2">
+<h2 class="anchored" data-anchor-id="messages">Messages</h2>
+<p><a href="https://AnswerDotAI.github.io/mcpmini/core.html#jreq"><code>jreq</code></a> builds a JSON-RPC request when you pass an id, or a notification without one. <a href="https://AnswerDotAI.github.io/mcpmini/core.html#jtool"><code>jtool</code></a> builds a <code>tools/call</code> request and supplies an empty <code>arguments</code> object when no arguments are given.</p>
+<div id="4edff3f7" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-09T11:58:20.874932+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-09T11:58:20.952703+00:00&quot;,&quot;total&quot;:0.077775287999998}}" data-execution_count="4">
+<hr>
+<p><a href="https://github.com/AnswerDotAI/mcpmini/blob/main/mcpmini/core.py#L56" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="jtool" class="level3">
+<h3 class="anchored" data-anchor-id="jtool">jtool</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> jtool(</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    name, <span class="bu">id</span>:<span class="bu">int</span><span class="op">=</span><span class="dv">1</span>, <span class="op">**</span>arguments</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>):</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>A <code>tools/call</code> request; omitted arguments become an empty object.</em></p>
+</section>
+</div>
+<div id="68ca01ef" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-09T11:58:20.952812+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-09T11:58:20.955569+00:00&quot;,&quot;total&quot;:0.0027597449999916535}}" data-execution_count="5">
+<hr>
+<p><a href="https://github.com/AnswerDotAI/mcpmini/blob/main/mcpmini/core.py#L49" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="jreq" class="level3">
+<h3 class="anchored" data-anchor-id="jreq">jreq</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> jreq(</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    method, <span class="bu">id</span>:NoneType<span class="op">=</span><span class="va">None</span>, <span class="op">**</span>params</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>):</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>JSON-RPC request, or notification when <code>id</code> is None.</em></p>
+</section>
+</div>
+<p>Use <a href="https://AnswerDotAI.github.io/mcpmini/core.html#jresp"><code>jresp</code></a> for a result and <a href="https://AnswerDotAI.github.io/mcpmini/core.html#jerr"><code>jerr</code></a> for a JSON-RPC error reply.</p>
+<div id="38494fba" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-09T11:58:20.956591+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-09T11:58:20.958974+00:00&quot;,&quot;total&quot;:0.002385735999979488}}" data-execution_count="7">
+<hr>
+<p><a href="https://github.com/AnswerDotAI/mcpmini/blob/main/mcpmini/core.py#L62" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="jerr" class="level3">
+<h3 class="anchored" data-anchor-id="jerr">jerr</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> jerr(</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    <span class="bu">id</span>, code, message</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>):</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>JSON-RPC error reply; MCP uses -32601 for unknown methods, -32602 for bad params, -32603 for handler failures</em></p>
+</section>
+</div>
+<div id="52d51301" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-09T11:58:20.959092+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-09T11:58:20.961379+00:00&quot;,&quot;total&quot;:0.002289405999988503}}" data-execution_count="8">
+<hr>
+<p><a href="https://github.com/AnswerDotAI/mcpmini/blob/main/mcpmini/core.py#L61" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="jresp" class="level3">
+<h3 class="anchored" data-anchor-id="jresp">jresp</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> jresp(</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    <span class="bu">id</span>, result</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>):</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+</div>
+<p>Stdio carries one JSON message per line. <a href="https://AnswerDotAI.github.io/mcpmini/core.html#send_jmsg"><code>send_jmsg</code></a> writes that line; <a href="https://AnswerDotAI.github.io/mcpmini/core.html#recv_jmsg"><code>recv_jmsg</code></a> reads it and returns <code>None</code> at EOF.</p>
+<div id="bdc1b843" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-09T11:58:20.962448+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-09T11:58:20.964756+00:00&quot;,&quot;total&quot;:0.0023102749999850403}}" data-execution_count="10">
+<hr>
+<p><a href="https://github.com/AnswerDotAI/mcpmini/blob/main/mcpmini/core.py#L72" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="recv_jmsg" class="level3">
+<h3 class="anchored" data-anchor-id="recv_jmsg">recv_jmsg</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="cf">async</span> <span class="kw">def</span> recv_jmsg(</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    reader</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>):</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Read one newline-delimited JSON message; None at EOF.</em></p>
+</section>
+</div>
+<div id="34f6968f" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-09T11:58:20.964845+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-09T11:58:20.967244+00:00&quot;,&quot;total&quot;:0.0024020269999880384}}" data-execution_count="11">
+<hr>
+<p><a href="https://github.com/AnswerDotAI/mcpmini/blob/main/mcpmini/core.py#L67" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="send_jmsg" class="level3">
+<h3 class="anchored" data-anchor-id="send_jmsg">send_jmsg</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="cf">async</span> <span class="kw">def</span> send_jmsg(</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    writer, msg</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>):</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Write one newline-delimited JSON message.</em></p>
+</section>
+</div>
+</section>
+<section id="tools-from-functions" class="level2">
+<h2 class="anchored" data-anchor-id="tools-from-functions">Tools from functions</h2>
+<p>A tool is just a docmented function. Its name, docstring, annotations, and parameter comments give <code>get_schema</code> the information MCP needs. Pass <code>pname='inputSchema'</code> to use MCP’s name for the argument schema:</p>
+<div id="7e98919b" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> fahrenheit(</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>    celsius:<span class="bu">float</span>, <span class="co"># Temperature to convert</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span><span class="bu">float</span>:</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>    <span class="co">"Convert Celsius to Fahrenheit"</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> celsius<span class="op">*</span><span class="dv">9</span><span class="op">/</span><span class="dv">5</span><span class="op">+</span><span class="dv">32</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>get_schema(fahrenheit, pname<span class="op">=</span><span class="st">'inputSchema'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>{'name': 'fahrenheit',
+ 'description': 'Convert Celsius to Fahrenheit\n\nReturns:\n- type: number',
+ 'inputSchema': {'type': 'object',
+  'properties': {'celsius': {'description': 'Temperature to convert',
+    'type': 'number'}},
+  'required': ['celsius']}}</code></pre>
+</div>
+</div>
+<p>MCP tool results contain a list of content blocks. <a href="https://AnswerDotAI.github.io/mcpmini/core.html#_content"><code>_content</code></a> puts a string in one text block and uses <code>repr</code> for other values. This keeps Python’s representation, including quotes around nested strings. A dict with a <code>content</code> key passes through unchanged, allowing tools to return images or several blocks.</p>
+<div id="788c2220" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>test_eq(_content(<span class="st">'hi'</span>)[<span class="st">'content'</span>], [<span class="bu">dict</span>(<span class="bu">type</span><span class="op">=</span><span class="st">'text'</span>, text<span class="op">=</span><span class="st">'hi'</span>)])</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>test_eq(_content(<span class="fl">212.0</span>)[<span class="st">'content'</span>][<span class="dv">0</span>][<span class="st">'text'</span>], <span class="st">'212.0'</span>)</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>passthru <span class="op">=</span> <span class="bu">dict</span>(content<span class="op">=</span>[<span class="bu">dict</span>(<span class="bu">type</span><span class="op">=</span><span class="st">'image'</span>, data<span class="op">=</span><span class="st">'AAAA'</span>, mimeType<span class="op">=</span><span class="st">'image/png'</span>)])</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>test_eq(_content(passthru), passthru)</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>_content(<span class="bu">dict</span>(a<span class="op">=</span><span class="dv">1</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>{'content': [{'type': 'text', 'text': "{'a': 1}"}], 'isError': False}</code></pre>
+</div>
+</div>
+</section>
+<section id="the-server" class="level2">
+<h2 class="anchored" data-anchor-id="the-server">The server</h2>
+<p><a href="https://AnswerDotAI.github.io/mcpmini/core.html#mcpserver"><code>MCPServer</code></a> stores its name, version, optional model instructions, and the tools’ functions and schemas. Transports and tests both call <code>dispatch</code> with a message dict. The server keeps no client-session table. A context variable holds the transport callback for the current tool call.</p>
+<div id="d416a001" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-09T11:58:20.970447+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-09T11:58:20.973384+00:00&quot;,&quot;total&quot;:0.002939942000011797}}" data-execution_count="14">
+<hr>
+<p><a href="https://github.com/AnswerDotAI/mcpmini/blob/main/mcpmini/core.py#L85" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="mcpserver" class="level3">
+<h3 class="anchored" data-anchor-id="mcpserver">MCPServer</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> MCPServer(</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>    name, <span class="co"># Server name reported to clients</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>    tools:<span class="bu">tuple</span><span class="op">=</span>(), <span class="co"># Functions (sync or async) exposed as tools, described by their docments</span></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>    version:<span class="bu">str</span><span class="op">=</span><span class="st">'0.0.6'</span>, <span class="co"># Server version reported to clients</span></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>    instructions:NoneType<span class="op">=</span><span class="va">None</span>, <span class="co"># Optional guidance forwarded to the client's model</span></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>):</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>An MCP tool server: <code>dispatch</code> maps one message dict to one reply dict</em></p>
+</section>
+</div>
+<p><code>initialize</code> echoes a supported version or offers the newest entry in <code>PROTO_VERSIONS</code>. Unknown tool names receive JSON-RPC errors. Exceptions raised by tools instead return a traceback in <code>content</code> with <code>isError=True</code>, where the model can read and respond to the failure.</p>
+<div id="42a0c482" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-09T11:58:20.976122+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-09T11:58:20.979778+00:00&quot;,&quot;total&quot;:0.0036577820000047723}}" data-execution_count="16">
+<hr>
+<p><a href="https://github.com/AnswerDotAI/mcpmini/blob/main/mcpmini/core.py#L115" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="mcpserver.dispatch" class="level3">
+<h3 class="anchored" data-anchor-id="mcpserver.dispatch">MCPServer.dispatch</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="cf">async</span> <span class="kw">def</span> dispatch(</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>    msg, requester:NoneType<span class="op">=</span><span class="va">None</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>):</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>The reply dict for one JSON-RPC message dict; None for notifications</em></p>
+</section>
+</div>
+<p>Our demo server converts temperatures, takes an async nap, and crashes on demand. The initialization tests request one supported version and one unsupported version:</p>
+<div id="8454b1b8" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="cf">async</span> <span class="kw">def</span> nap(</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>    ms:<span class="bu">int</span><span class="op">=</span><span class="dv">1</span>, <span class="co"># How long to sleep, in milliseconds</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span><span class="bu">str</span>:</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>    <span class="co">"Sleep, then report back"</span></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">await</span> asyncio.sleep(ms<span class="op">/</span><span class="dv">1000</span>)</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="ss">f'napped </span><span class="sc">{</span>ms<span class="sc">}</span><span class="ss">ms'</span></span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> crash()<span class="op">-&gt;</span><span class="bu">str</span>:</span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>    <span class="co">"Always fails"</span></span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="dv">1</span><span class="op">/</span><span class="dv">0</span></span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>srv <span class="op">=</span> MCPServer(<span class="st">'demo'</span>, [fahrenheit, nap, crash], instructions<span class="op">=</span><span class="st">'Convert temperatures on request.'</span>)</span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>init <span class="op">=</span> <span class="cf">await</span> srv.dispatch(jreq(<span class="st">'initialize'</span>, <span class="dv">1</span>, protocolVersion<span class="op">=</span><span class="st">'2025-06-18'</span>, capabilities<span class="op">=</span>{}, clientInfo<span class="op">=</span><span class="bu">dict</span>(name<span class="op">=</span><span class="st">'t'</span>, version<span class="op">=</span><span class="st">'0'</span>)))</span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>test_eq(init[<span class="st">'result'</span>][<span class="st">'protocolVersion'</span>], <span class="st">'2025-06-18'</span>)</span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a>old <span class="op">=</span> <span class="cf">await</span> srv.dispatch(jreq(<span class="st">'initialize'</span>, <span class="dv">2</span>, protocolVersion<span class="op">=</span><span class="st">'2024-11-05'</span>))</span>
+<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a>test_eq(old[<span class="st">'result'</span>][<span class="st">'protocolVersion'</span>], PROTO_VERSIONS[<span class="dv">0</span>])</span>
+<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a>init[<span class="st">'result'</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>{'protocolVersion': '2025-06-18',
+ 'capabilities': {'tools': {}},
+ 'serverInfo': {'name': 'demo', 'version': '0.0.5'},
+ 'instructions': 'Convert temperatures on request.'}</code></pre>
+</div>
+</div>
+<p>Both synchronous functions and coroutines return MCP content blocks through <code>tools/call</code>:</p>
+<div id="ea3881c3" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>fahrenheit_reply <span class="op">=</span> <span class="cf">await</span> srv.dispatch(jtool(<span class="st">'fahrenheit'</span>, celsius<span class="op">=</span><span class="dv">100</span>))</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>nap_reply <span class="op">=</span> <span class="cf">await</span> srv.dispatch(jtool(<span class="st">'nap'</span>, ms<span class="op">=</span><span class="dv">2</span>))</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>texts <span class="op">=</span> [r[<span class="st">'result'</span>][<span class="st">'content'</span>][<span class="dv">0</span>][<span class="st">'text'</span>] <span class="cf">for</span> r <span class="kw">in</span> (fahrenheit_reply, nap_reply)]</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>test_eq(texts, [<span class="st">'212.0'</span>,<span class="st">'napped 2ms'</span>])</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>texts</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>['212.0', 'napped 2ms']</code></pre>
+</div>
+</div>
+<p>Calling <code>crash</code> returns its traceback as a tool result, not a JSON-RPC error:</p>
+<div id="ec9020ad" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>boom <span class="op">=</span> (<span class="cf">await</span> srv.dispatch(jtool(<span class="st">'crash'</span>)))[<span class="st">'result'</span>]</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> boom[<span class="st">'isError'</span>] <span class="kw">and</span> <span class="st">'ZeroDivisionError'</span> <span class="kw">in</span> boom[<span class="st">'content'</span>][<span class="dv">0</span>][<span class="st">'text'</span>]</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>boom</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>{'content': [{'type': 'text',
+   'text': 'Traceback (most recent call last):\n  File "&lt;ipython-input-11-171bf1eed883&gt;", line 5, in _acall\n    res = f(**args)\n  File "&lt;ipython-input-12-2bcae28d6802&gt;", line 10, in crash\n    return 1/0\n           ~^~\nZeroDivisionError: division by zero\n'}],
+ 'isError': True}</code></pre>
+</div>
+</div>
+</section>
+<section id="stdio" class="level2">
+<h2 class="anchored" data-anchor-id="stdio">stdio</h2>
+<p><a href="https://AnswerDotAI.github.io/mcpmini/core.html#serve_stdio"><code>serve_stdio</code></a> reads newline-delimited JSON until EOF. A malformed JSON line receives error <code>-32700</code> with a null id, since no request id is available. Notifications receive no reply. You can supply asyncio streams or use the default stdin and stdout.</p>
+<p>For tests, <a href="https://AnswerDotAI.github.io/mcpmini/core.html#stdio_peer"><code>stdio_peer</code></a> connects the server and a small <a href="https://AnswerDotAI.github.io/mcpmini/core.html#stdiopeer"><code>StdioPeer</code></a> client through a socketpair. The helper handles setup and shutdown; the messages still use the real wire format.</p>
+<div id="0b8b92b5" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-09T11:58:20.983089+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-09T11:58:20.985813+00:00&quot;,&quot;total&quot;:0.002725961000010102}}" data-execution_count="18">
+<hr>
+<p><a href="https://github.com/AnswerDotAI/mcpmini/blob/main/mcpmini/core.py#L160" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="stdio_peer" class="level3">
+<h3 class="anchored" data-anchor-id="stdio_peer">stdio_peer</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> stdio_peer(</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>    srv</span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>):</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>An in-process <a href="https://AnswerDotAI.github.io/mcpmini/core.html#stdiopeer"><code>StdioPeer</code></a> speaking the real newline-delimited wire protocol to <code>srv</code>.</em></p>
+</section>
+</div>
+<div id="72fc1ff6" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-09T11:58:20.985902+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-09T11:58:20.988268+00:00&quot;,&quot;total&quot;:0.0023686739999959627}}" data-execution_count="19">
+<hr>
+<p><a href="https://github.com/AnswerDotAI/mcpmini/blob/main/mcpmini/core.py#L138" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="stdiopeer" class="level3">
+<h3 class="anchored" data-anchor-id="stdiopeer">StdioPeer</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> StdioPeer(</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>    reader, writer</span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>):</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>A small JSON-RPC peer connected to <a href="https://AnswerDotAI.github.io/mcpmini/core.html#serve_stdio"><code>serve_stdio</code></a>, for examples and protocol tests.</em></p>
+</section>
+</div>
+<div id="577669df" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-09T11:58:20.991675+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-09T11:58:20.995733+00:00&quot;,&quot;total&quot;:0.004061056000011831}}" data-execution_count="21">
+<hr>
+<p><a href="https://github.com/AnswerDotAI/mcpmini/blob/main/mcpmini/core.py#L184" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="serve_stdio" class="level3">
+<h3 class="anchored" data-anchor-id="serve_stdio">serve_stdio</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="cf">async</span> <span class="kw">def</span> serve_stdio(</span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>    srv, <span class="co"># `MCPServer` to serve</span></span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>    reader:NoneType<span class="op">=</span><span class="va">None</span>, <span class="co"># asyncio stream to read messages from; stdin if None</span></span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>    writer:NoneType<span class="op">=</span><span class="va">None</span>, <span class="co"># asyncio stream to write replies to; stdout if None</span></span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a>):</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Serve <code>srv</code> over newline-delimited JSON-RPC until EOF, dispatching messages concurrently</em></p>
+</section>
+</div>
+<p>The peer calls a tool, sends malformed JSON, then pings the server. The parse error does not prevent the ping from succeeding. Closing the peer ends the server task:</p>
+<div id="1aa96574" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="cf">async</span> <span class="cf">with</span> stdio_peer(srv) <span class="im">as</span> peer:</span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>    r <span class="op">=</span> <span class="cf">await</span> peer.call(<span class="st">'fahrenheit'</span>, celsius<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>    test_eq(r[<span class="st">'result'</span>][<span class="st">'content'</span>][<span class="dv">0</span>][<span class="st">'text'</span>], <span class="st">'32.0'</span>)</span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">await</span> peer.send_raw(<span class="st">b'not json</span><span class="ch">\n</span><span class="st">'</span>)</span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">await</span> peer.send_request(<span class="st">'ping'</span>)</span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a>    test_eq((<span class="cf">await</span> peer.recv())[<span class="st">'error'</span>][<span class="st">'code'</span>], <span class="op">-</span><span class="dv">32700</span>)</span>
+<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a>    test_eq((<span class="cf">await</span> peer.recv())[<span class="st">'result'</span>], {})</span>
+<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a>r</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>{'jsonrpc': '2.0',
+ 'id': 1,
+ 'result': {'content': [{'type': 'text', 'text': '32.0'}], 'isError': False}}</code></pre>
+</div>
+</div>
+<p>A tool can need more information before it can finish. Await <a href="https://AnswerDotAI.github.io/mcpmini/core.html#mcpserver.elicit"><code>MCPServer.elicit</code></a> to ask the client for structured input without ending the tool call. It sends <code>elicitation/create</code> through that call’s transport and returns the client’s response. The tool can then continue as ordinary sequential code. Here it asks for a name before returning a greeting:</p>
+<div id="6d24c5fd" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="cf">async</span> <span class="kw">def</span> greeting()<span class="op">-&gt;</span><span class="bu">str</span>:</span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"Ask for a name, then greet it"</span></span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>    r <span class="op">=</span> <span class="cf">await</span> interactive.elicit(<span class="st">'Who?'</span>, <span class="bu">dict</span>(<span class="bu">type</span><span class="op">=</span><span class="st">'object'</span>, properties<span class="op">=</span><span class="bu">dict</span>(name<span class="op">=</span><span class="bu">dict</span>(<span class="bu">type</span><span class="op">=</span><span class="st">'string'</span>)), required<span class="op">=</span>[<span class="st">'name'</span>]))</span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="ss">f"Hello </span><span class="sc">{</span>r[<span class="st">'content'</span>][<span class="st">'name'</span>]<span class="sc">}</span><span class="ss">"</span></span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>interactive <span class="op">=</span> MCPServer(<span class="st">'interactive'</span>, [greeting])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The client answers the nested request before it receives the greeting. A reply has no <code>method</code>; <a href="https://AnswerDotAI.github.io/mcpmini/core.html#serve_stdio"><code>serve_stdio</code></a> matches its id to the pending server request:</p>
+<div id="32c5ab2e" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="cf">async</span> <span class="cf">with</span> stdio_peer(interactive) <span class="im">as</span> peer:</span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">await</span> peer.send_call(<span class="st">'greeting'</span>)</span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>    prompt <span class="op">=</span> <span class="cf">await</span> peer.recv()</span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>    test_eq(prompt[<span class="st">'method'</span>], <span class="st">'elicitation/create'</span>)</span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">await</span> peer.reply(prompt, <span class="bu">dict</span>(action<span class="op">=</span><span class="st">'accept'</span>, content<span class="op">=</span><span class="bu">dict</span>(name<span class="op">=</span><span class="st">'Ada'</span>)))</span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a>    greeting_res <span class="op">=</span> <span class="cf">await</span> peer.recv()</span>
+<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a>test_eq(greeting_res[<span class="st">'result'</span>][<span class="st">'content'</span>][<span class="dv">0</span>][<span class="st">'text'</span>], <span class="st">'Hello Ada'</span>)</span>
+<span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a>greeting_res</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>{'jsonrpc': '2.0',
+ 'id': 1,
+ 'result': {'content': [{'type': 'text', 'text': 'Hello Ada'}],
+  'isError': False}}</code></pre>
+</div>
+</div>
+<p>The stdio loop starts a task for each request. The short nap can finish while the long nap is awaiting sleep. This also lets an interrupt tool run alongside an async execute tool on the same connection. A synchronous tool that blocks the event loop does not yield that opportunity:</p>
+<div id="a9547a74" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="cf">async</span> <span class="cf">with</span> stdio_peer(srv) <span class="im">as</span> peer:</span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">await</span> peer.send_call(<span class="st">'nap'</span>, ms<span class="op">=</span><span class="dv">300</span>)</span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">await</span> peer.send_call(<span class="st">'nap'</span>, ms<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a>    replies <span class="op">=</span> [<span class="cf">await</span> peer.recv() <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">2</span>)]</span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a>test_eq([r[<span class="st">'id'</span>] <span class="cf">for</span> r <span class="kw">in</span> replies], [<span class="dv">2</span>, <span class="dv">1</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="streamable-http" class="level2">
+<h2 class="anchored" data-anchor-id="streamable-http">Streamable HTTP</h2>
+<p><a href="https://AnswerDotAI.github.io/mcpmini/core.html#create_app"><code>create_app</code></a> exposes one POST endpoint, <code>/mcp</code> by default. It returns JSON for requests and HTTP 202 for notifications. It creates no <code>Mcp-Session-Id</code> and ignores an incoming one. GET returns 405; there is no server-push stream.</p>
+<p>The <a href="https://modelcontextprotocol.io/specification/2025-11-25/basic/transports">2025 transport specification</a> allows a JSON reply instead of SSE and permits 405 when a server does not offer a GET stream. Our HTTP server does not send progress notifications or nested requests.</p>
+<p><a href="https://AnswerDotAI.github.io/mcpmini/core.html#auth_app"><code>auth_app</code></a> wraps any ASGI app. It checks the bearer token before calling that app, protecting all HTTP routes beneath it. The comparison is constant-time. This middleware handles static-token authentication, not OAuth. A deployment still needs transport security and protection against untrusted origins.</p>
+<div id="ff1d65ef" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-09T11:58:20.998569+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-09T11:58:21.001313+00:00&quot;,&quot;total&quot;:0.0027466610000033143}}" data-execution_count="23">
+<hr>
+<p><a href="https://github.com/AnswerDotAI/mcpmini/blob/main/mcpmini/core.py#L238" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="create_app" class="level3">
+<h3 class="anchored" data-anchor-id="create_app">create_app</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> create_app(</span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>    srv, <span class="co"># `MCPServer` to expose</span></span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>    token:NoneType<span class="op">=</span><span class="va">None</span>, <span class="co"># Bearer token required on every request; open if None</span></span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>    path:<span class="bu">str</span><span class="op">=</span><span class="st">'/mcp'</span>, <span class="co"># Endpoint path</span></span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a>):</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>ASGI app serving <code>srv</code> over streamable HTTP</em></p>
+</section>
+</div>
+<div id="df54dfcb" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-09T11:58:21.001403+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-09T11:58:21.004435+00:00&quot;,&quot;total&quot;:0.0030349079999894}}" data-execution_count="24">
+<hr>
+<p><a href="https://github.com/AnswerDotAI/mcpmini/blob/main/mcpmini/core.py#L224" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="auth_app" class="level3">
+<h3 class="anchored" data-anchor-id="auth_app">auth_app</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb30"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> auth_app(</span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>    app, <span class="co"># ASGI app to guard</span></span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>    token, <span class="co"># The bearer token every request must carry</span></span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a>):</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Wrap <code>app</code> to reject requests whose <code>Authorization</code> bearer token doesn’t match <code>token</code></em></p>
+</section>
+</div>
+<p><code>httpx.ASGITransport</code> tests the app without a socket. Missing and wrong tokens get 401 before JSON parsing. The correct token permits a tool call. Authenticated GET gets 405 and a notification gets 202:</p>
+<div id="099e2467" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>app <span class="op">=</span> create_app(srv, token<span class="op">=</span><span class="st">'sesame'</span>)</span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a><span class="cf">async</span> <span class="kw">def</span> hpost(msg, token<span class="op">=</span><span class="va">None</span>, meth<span class="op">=</span><span class="st">'POST'</span>):</span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>    hdrs <span class="op">=</span> {<span class="st">'Authorization'</span>: <span class="ss">f'Bearer </span><span class="sc">{</span>token<span class="sc">}</span><span class="ss">'</span>} <span class="cf">if</span> token <span class="cf">else</span> {}</span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">async</span> <span class="cf">with</span> httpx.AsyncClient(transport<span class="op">=</span>httpx.ASGITransport(app), base_url<span class="op">=</span><span class="st">'http://t'</span>) <span class="im">as</span> c:</span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="cf">await</span> c.request(meth, <span class="st">'/mcp'</span>, json<span class="op">=</span>msg, headers<span class="op">=</span>hdrs)</span>
+<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a>ping <span class="op">=</span> jreq(<span class="st">'ping'</span>, <span class="dv">1</span>)</span>
+<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a>test_eq((<span class="cf">await</span> hpost(ping)).status_code, <span class="dv">401</span>)</span>
+<span id="cb31-8"><a href="#cb31-8" aria-hidden="true" tabindex="-1"></a>test_eq((<span class="cf">await</span> hpost(ping, <span class="st">'wrong'</span>)).status_code, <span class="dv">401</span>)</span>
+<span id="cb31-9"><a href="#cb31-9" aria-hidden="true" tabindex="-1"></a>test_eq((<span class="cf">await</span> hpost(ping)).headers[<span class="st">'www-authenticate'</span>], <span class="st">'Bearer'</span>)</span>
+<span id="cb31-10"><a href="#cb31-10" aria-hidden="true" tabindex="-1"></a>test_eq((<span class="cf">await</span> hpost(ping, <span class="st">'sesame'</span>)).json()[<span class="st">'result'</span>], {})</span>
+<span id="cb31-11"><a href="#cb31-11" aria-hidden="true" tabindex="-1"></a>test_eq((<span class="cf">await</span> hpost(ping, <span class="st">'sesame'</span>, meth<span class="op">=</span><span class="st">'GET'</span>)).status_code, <span class="dv">405</span>)</span>
+<span id="cb31-12"><a href="#cb31-12" aria-hidden="true" tabindex="-1"></a>test_eq((<span class="cf">await</span> hpost(jreq(<span class="st">'notifications/initialized'</span>), <span class="st">'sesame'</span>)).status_code, <span class="dv">202</span>)</span>
+<span id="cb31-13"><a href="#cb31-13" aria-hidden="true" tabindex="-1"></a>(<span class="cf">await</span> hpost(jtool(<span class="st">'fahrenheit'</span>, <span class="dv">2</span>, celsius<span class="op">=</span><span class="dv">37</span>), <span class="st">'sesame'</span>)).json()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>{'jsonrpc': '2.0',
+ 'id': 2,
+ 'result': {'content': [{'type': 'text', 'text': '98.6'}], 'isError': False}}</code></pre>
+</div>
+</div>
+</section>
+<section id="serving" class="level2">
+<h2 class="anchored" data-anchor-id="serving">Serving</h2>
+<p>A tool server lets its clients run your Python functions. <a href="https://AnswerDotAI.github.io/mcpmini/core.html#serve_mcp"><code>serve_mcp</code></a> therefore requires a token for a non-loopback bind. Set <code>no_token=True</code> only when something else protects access, such as a VPN or fronting proxy.</p>
+<p>This check belongs to <a href="https://AnswerDotAI.github.io/mcpmini/core.html#serve_mcp"><code>serve_mcp</code></a>, not <a href="https://AnswerDotAI.github.io/mcpmini/core.html#create_app"><code>create_app</code></a>: applications that mount the latter must arrange their own protection. Jupyter’s old tokenless default is the cautionary tale here.</p>
+<div id="53d19388" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-09T11:58:21.006517+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-09T11:58:21.009929+00:00&quot;,&quot;total&quot;:0.0034143679999942833}}" data-execution_count="26">
+<hr>
+<p><a href="https://github.com/AnswerDotAI/mcpmini/blob/main/mcpmini/core.py#L254" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="serve_mcp" class="level3">
+<h3 class="anchored" data-anchor-id="serve_mcp">serve_mcp</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb33"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="cf">async</span> <span class="kw">def</span> serve_mcp(</span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>    srv, <span class="co"># `MCPServer` to serve</span></span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>    host:<span class="bu">str</span><span class="op">=</span><span class="st">'127.0.0.1'</span>, <span class="co"># Interface to bind</span></span>
+<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a>    port:<span class="bu">int</span><span class="op">=</span><span class="dv">8000</span>, <span class="co"># Port to bind</span></span>
+<span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a>    token:NoneType<span class="op">=</span><span class="va">None</span>, <span class="co"># Bearer token; `$MCPMINI_TOKEN` if None</span></span>
+<span id="cb33-6"><a href="#cb33-6" aria-hidden="true" tabindex="-1"></a>    no_token:<span class="bu">bool</span><span class="op">=</span><span class="va">False</span>, <span class="co"># Serve a non-loopback interface openly, when auth lives elsewhere (e.g. a VPN)</span></span>
+<span id="cb33-7"><a href="#cb33-7" aria-hidden="true" tabindex="-1"></a>    <span class="op">*</span>, path:<span class="bu">str</span><span class="op">=</span><span class="st">'/mcp'</span>, <span class="co"># Endpoint path</span></span>
+<span id="cb33-8"><a href="#cb33-8" aria-hidden="true" tabindex="-1"></a>):</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Serve <code>srv</code> over streamable HTTP; non-loopback binds require a token unless <code>no_token</code></em></p>
+</section>
+</div>
+<p>An unprotected non-loopback bind raises before opening a socket. Loopback binds may omit the token. For the client examples, however, we start a loopback server with the token <code>sesame</code>:</p>
+<div id="9625fe95" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb34"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="cf">with</span> expect_fail(<span class="pp">ValueError</span>): <span class="cf">await</span> serve_mcp(srv, host<span class="op">=</span><span class="st">'0.0.0.0'</span>)</span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> free_port():</span>
+<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">with</span> socket.socket() <span class="im">as</span> s:</span>
+<span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a>        s.bind((<span class="st">'127.0.0.1'</span>, <span class="dv">0</span>))</span>
+<span id="cb34-6"><a href="#cb34-6" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> s.getsockname()[<span class="dv">1</span>]</span>
+<span id="cb34-7"><a href="#cb34-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-8"><a href="#cb34-8" aria-hidden="true" tabindex="-1"></a>port <span class="op">=</span> free_port()</span>
+<span id="cb34-9"><a href="#cb34-9" aria-hidden="true" tabindex="-1"></a>server_task <span class="op">=</span> asyncio.create_task(serve_mcp(srv, port<span class="op">=</span>port, token<span class="op">=</span><span class="st">'sesame'</span>))</span>
+<span id="cb34-10"><a href="#cb34-10" aria-hidden="true" tabindex="-1"></a>url <span class="op">=</span> <span class="ss">f'http://127.0.0.1:</span><span class="sc">{</span>port<span class="sc">}</span><span class="ss">/mcp'</span></span>
+<span id="cb34-11"><a href="#cb34-11" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">100</span>):</span>
+<span id="cb34-12"><a href="#cb34-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">try</span>:</span>
+<span id="cb34-13"><a href="#cb34-13" aria-hidden="true" tabindex="-1"></a>        <span class="cf">with</span> socket.create_connection((<span class="st">'127.0.0.1'</span>, port), timeout<span class="op">=</span><span class="fl">0.5</span>): <span class="cf">break</span></span>
+<span id="cb34-14"><a href="#cb34-14" aria-hidden="true" tabindex="-1"></a>    <span class="cf">except</span> <span class="pp">OSError</span>: <span class="cf">await</span> asyncio.sleep(<span class="fl">0.05</span>)</span>
+<span id="cb34-15"><a href="#cb34-15" aria-hidden="true" tabindex="-1"></a>url</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>'http://127.0.0.1:56405/mcp'</code></pre>
+</div>
+</div>
+</section>
+<section id="the-client" class="level2">
+<h2 class="anchored" data-anchor-id="the-client">The client</h2>
+<p>Other servers can return SSE bodies or assign session ids even though ours does neither. The HTTP client accepts both JSON and SSE. After initialization, its POSTs include the negotiated <code>MCP-Protocol-Version</code> and any server-issued <code>Mcp-Session-Id</code>.</p>
+<p><a href="https://AnswerDotAI.github.io/mcpmini/core.html#sse_data"><code>sse_data</code></a> parses a complete SSE body. Blank lines separate events; an event’s <code>data:</code> lines combine into one JSON message.</p>
+<div id="9822101d" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-09T11:58:21.011424+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-09T11:58:21.013950+00:00&quot;,&quot;total&quot;:0.002528893000004473}}" data-execution_count="28">
+<hr>
+<p><a href="https://github.com/AnswerDotAI/mcpmini/blob/main/mcpmini/core.py#L270" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="sse_data" class="level3">
+<h3 class="anchored" data-anchor-id="sse_data">sse_data</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb36"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> sse_data(</span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>    text</span>
+<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a>):</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>JSON messages from the <code>data:</code> lines of SSE body <code>text</code></em></p>
+</section>
+</div>
+<div id="3f7478aa" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb37"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>test_eq(sse_data(<span class="st">'event: message</span><span class="ch">\n</span><span class="st">data: {"a": 1}</span><span class="ch">\n\n</span><span class="st">: keepalive</span><span class="ch">\n\n</span><span class="st">data: {"b":</span><span class="ch">\n</span><span class="st">data:  2}</span><span class="ch">\n\n</span><span class="st">'</span>), [<span class="bu">dict</span>(a<span class="op">=</span><span class="dv">1</span>), <span class="bu">dict</span>(b<span class="op">=</span><span class="dv">2</span>)])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Each transport’s <code>send</code> takes a message dict and returns its reply, or <code>None</code> for a notification. <a href="https://AnswerDotAI.github.io/mcpmini/core.html#stdiotransport"><code>StdioTransport</code></a> starts a subprocess. While waiting for a reply, it answers server requests through the sync or async <code>on_request</code> callback. It then continues waiting for the original request id.</p>
+<div id="8f2b0665" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-09T11:58:21.016798+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-09T11:58:21.019732+00:00&quot;,&quot;total&quot;:0.0029371109999942746}}" data-execution_count="30">
+<hr>
+<p><a href="https://github.com/AnswerDotAI/mcpmini/blob/main/mcpmini/core.py#L279" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="stdiotransport" class="level3">
+<h3 class="anchored" data-anchor-id="stdiotransport">StdioTransport</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb38"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> StdioTransport(</span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a>    argv, <span class="co"># Server command line, e.g. `['mymcp', '--flag']`</span></span>
+<span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a>    env:NoneType<span class="op">=</span><span class="va">None</span>, <span class="co"># Environment for the subprocess; inherited if None</span></span>
+<span id="cb38-4"><a href="#cb38-4" aria-hidden="true" tabindex="-1"></a>    cwd:NoneType<span class="op">=</span><span class="va">None</span>, <span class="co"># Working directory for the subprocess; inherited if None</span></span>
+<span id="cb38-5"><a href="#cb38-5" aria-hidden="true" tabindex="-1"></a>    on_request:NoneType<span class="op">=</span><span class="va">None</span>, <span class="co"># Sync or async `(method, params)` handler for a server request received during a client request</span></span>
+<span id="cb38-6"><a href="#cb38-6" aria-hidden="true" tabindex="-1"></a>):</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>JSON-RPC to a subprocess over its stdin/stdout</em></p>
+</section>
+</div>
+<p><a href="https://AnswerDotAI.github.io/mcpmini/core.html#httptransport"><code>HTTPTransport</code></a> sends one POST per message. For SSE, it parses the response body and selects the message with the matching id.</p>
+<p>Call <code>delete</code> when you no longer need the server-side session. It returns the HTTP response, or <code>None</code> when no session id is set. Success and 404 clear the id. A 405 response leaves it in place because the server refused termination. Other HTTP errors raise. <code>aclose</code> closes the HTTP client without requesting session termination.</p>
+<div id="c14363d2" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-09T11:58:21.022284+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-09T11:58:21.025018+00:00&quot;,&quot;total&quot;:0.0027369020000094224}}" data-execution_count="32">
+<hr>
+<p><a href="https://github.com/AnswerDotAI/mcpmini/blob/main/mcpmini/core.py#L313" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="httptransport" class="level3">
+<h3 class="anchored" data-anchor-id="httptransport">HTTPTransport</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb39"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> HTTPTransport(</span>
+<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a>    url, <span class="co"># The MCP endpoint, e.g. 'http://127.0.0.1:8000/mcp'</span></span>
+<span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a>    token:NoneType<span class="op">=</span><span class="va">None</span>, <span class="co"># Bearer token to send with every request</span></span>
+<span id="cb39-4"><a href="#cb39-4" aria-hidden="true" tabindex="-1"></a>    http_client:NoneType<span class="op">=</span><span class="va">None</span>, <span class="co"># An `httpx.AsyncClient` to use, e.g. over `httpx.ASGITransport`; a fresh one if None</span></span>
+<span id="cb39-5"><a href="#cb39-5" aria-hidden="true" tabindex="-1"></a>):</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>JSON-RPC to a streamable HTTP endpoint, one POST per message</em></p>
+</section>
+</div>
+<p><a href="https://AnswerDotAI.github.io/mcpmini/core.html#mcpclient.start"><code>MCPClient.start</code></a> initializes the transport, sends <code>notifications/initialized</code>, and fetches <code>tools/list</code>. <code>mk_tool</code> builds the callables in <code>client.tools</code> from those schemas, reversing the server’s <code>get_schema</code> conversion.</p>
+<p>A bound tool calls <code>call_text</code>, which joins text blocks and raises <code>RuntimeError</code> for a tool error. Use <code>call_tool</code> when you need the complete result dict. JSON-RPC errors raise in <code>rpc</code>.</p>
+<div id="7c6f423f" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-09T11:58:21.028338+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-09T11:58:21.031220+00:00&quot;,&quot;total&quot;:0.002884977999997318}}" data-execution_count="34">
+<hr>
+<p><a href="https://github.com/AnswerDotAI/mcpmini/blob/main/mcpmini/core.py#L349" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="mcpclient" class="level3">
+<h3 class="anchored" data-anchor-id="mcpclient">MCPClient</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb40"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> MCPClient(</span>
+<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a>    tr, <span class="co"># A transport: `StdioTransport`, `HTTPTransport`, or compatible</span></span>
+<span id="cb40-3"><a href="#cb40-3" aria-hidden="true" tabindex="-1"></a>):</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Call an MCP server’s tools as Python functions</em></p>
+</section>
+</div>
+<p>We can now call the remote converter as a Python function. Its signature and docs come from the server’s schema, with parameter descriptions in <code>Annotated</code> metadata. Passing it back to <code>get_schema</code> recovers the original argument schema. The client also receives the server instructions.</p>
+<p>The example calls the converter and uses the async tool’s default argument. It then shows how a tool exception and an unknown tool name reach the Python caller:</p>
+<div id="1231e7e3" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb41"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="cf">async</span> <span class="cf">with</span> MCPClient.http(url, token<span class="op">=</span><span class="st">'sesame'</span>) <span class="im">as</span> c:</span>
+<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a>    test_eq(c.info[<span class="st">'serverInfo'</span>][<span class="st">'name'</span>], <span class="st">'demo'</span>)</span>
+<span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a>    test_eq(c.info[<span class="st">'instructions'</span>], <span class="st">'Convert temperatures on request.'</span>)</span>
+<span id="cb41-4"><a href="#cb41-4" aria-hidden="true" tabindex="-1"></a>    test_eq(<span class="bu">list</span>(inspect.signature(c.tools.fahrenheit).parameters), [<span class="st">'celsius'</span>])</span>
+<span id="cb41-5"><a href="#cb41-5" aria-hidden="true" tabindex="-1"></a>    test_eq(get_schema(c.tools.fahrenheit, pname<span class="op">=</span><span class="st">'inputSchema'</span>)[<span class="st">'inputSchema'</span>], srv.specs[<span class="dv">0</span>][<span class="st">'inputSchema'</span>])</span>
+<span id="cb41-6"><a href="#cb41-6" aria-hidden="true" tabindex="-1"></a>    test_eq(<span class="cf">await</span> c.tools.fahrenheit(celsius<span class="op">=</span><span class="dv">100</span>), <span class="st">'212.0'</span>)</span>
+<span id="cb41-7"><a href="#cb41-7" aria-hidden="true" tabindex="-1"></a>    test_eq(<span class="cf">await</span> c.tools.nap(), <span class="st">'napped 1ms'</span>)</span>
+<span id="cb41-8"><a href="#cb41-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">with</span> expect_fail(<span class="pp">RuntimeError</span>, contains<span class="op">=</span><span class="st">'ZeroDivisionError'</span>): <span class="cf">await</span> c.tools.crash()</span>
+<span id="cb41-9"><a href="#cb41-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">with</span> expect_fail(<span class="pp">RuntimeError</span>, contains<span class="op">=</span><span class="st">'-32602'</span>): <span class="cf">await</span> c.call_tool(<span class="st">'flux'</span>)</span>
+<span id="cb41-10"><a href="#cb41-10" aria-hidden="true" tabindex="-1"></a>    doc_line <span class="op">=</span> c.tools.fahrenheit.__doc__</span>
+<span id="cb41-11"><a href="#cb41-11" aria-hidden="true" tabindex="-1"></a>doc_line</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>'Convert Celsius to Fahrenheit\n\nReturns:\n- type: number'</code></pre>
+</div>
+</div>
+<p>Now launch a stdio server in a subprocess, as an MCP host would. The temporary script imports the exported module and defines its own converter; it cannot use this notebook’s in-memory function:</p>
+<div id="2d4ee035" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb43"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>serverfile <span class="op">=</span> Path(tempfile.mkdtemp())<span class="op">/</span><span class="st">'demo_stdio.py'</span></span>
+<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a>serverfile.write_text(<span class="st">'''import asyncio</span></span>
+<span id="cb43-3"><a href="#cb43-3" aria-hidden="true" tabindex="-1"></a><span class="st">from mcpmini.core import MCPServer, serve_stdio</span></span>
+<span id="cb43-4"><a href="#cb43-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-5"><a href="#cb43-5" aria-hidden="true" tabindex="-1"></a><span class="st">def fahrenheit(</span></span>
+<span id="cb43-6"><a href="#cb43-6" aria-hidden="true" tabindex="-1"></a><span class="st">    celsius:float, # Temperature to convert</span></span>
+<span id="cb43-7"><a href="#cb43-7" aria-hidden="true" tabindex="-1"></a><span class="st">)-&gt;float:</span></span>
+<span id="cb43-8"><a href="#cb43-8" aria-hidden="true" tabindex="-1"></a><span class="st">    "Convert Celsius to Fahrenheit"</span></span>
+<span id="cb43-9"><a href="#cb43-9" aria-hidden="true" tabindex="-1"></a><span class="st">    return celsius*9/5+32</span></span>
+<span id="cb43-10"><a href="#cb43-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-11"><a href="#cb43-11" aria-hidden="true" tabindex="-1"></a><span class="st">asyncio.run(serve_stdio(MCPServer('demo-stdio', [fahrenheit])))</span></span>
+<span id="cb43-12"><a href="#cb43-12" aria-hidden="true" tabindex="-1"></a><span class="st">'''</span>)</span>
+<span id="cb43-13"><a href="#cb43-13" aria-hidden="true" tabindex="-1"></a><span class="cf">async</span> <span class="cf">with</span> MCPClient.stdio([sys.executable, <span class="bu">str</span>(serverfile)]) <span class="im">as</span> c:</span>
+<span id="cb43-14"><a href="#cb43-14" aria-hidden="true" tabindex="-1"></a>    test_eq(c.info[<span class="st">'serverInfo'</span>][<span class="st">'name'</span>], <span class="st">'demo-stdio'</span>)</span>
+<span id="cb43-15"><a href="#cb43-15" aria-hidden="true" tabindex="-1"></a>    res <span class="op">=</span> <span class="cf">await</span> c.tools.fahrenheit(celsius<span class="op">=-</span><span class="dv">40</span>)</span>
+<span id="cb43-16"><a href="#cb43-16" aria-hidden="true" tabindex="-1"></a>res</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>'-40.0'</code></pre>
+</div>
+</div>
+</section>
+<section id="interop" class="level2">
+<h2 class="anchored" data-anchor-id="interop">Interop</h2>
+<p>Talking to ourselves is not enough to establish compatibility. First, the official SDK client initializes our HTTP server, lists its tools, and calls the converter. <code>streams[:2]</code> takes the two streams without depending on the optional session-id callback returned by older SDK versions:</p>
+<div id="6b0a2771" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-09T11:58:21.031921+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-09T11:58:21.414667+00:00&quot;,&quot;total&quot;:0.38275102800000127}}" data-execution_count="35">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb45"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> mcp <span class="im">import</span> ClientSession</span>
+<span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> mcp.client.streamable_http <span class="im">import</span> streamable_http_client, create_mcp_http_client</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="091d5a34" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb46"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a><span class="cf">async</span> <span class="cf">with</span> create_mcp_http_client(headers<span class="op">=</span>{<span class="st">'Authorization'</span>: <span class="st">'Bearer sesame'</span>}) <span class="im">as</span> hc, <span class="op">\</span></span>
+<span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a>        streamable_http_client(url, http_client<span class="op">=</span>hc) <span class="im">as</span> streams, <span class="op">\</span></span>
+<span id="cb46-3"><a href="#cb46-3" aria-hidden="true" tabindex="-1"></a>        ClientSession(<span class="op">*</span>streams[:<span class="dv">2</span>]) <span class="im">as</span> s:</span>
+<span id="cb46-4"><a href="#cb46-4" aria-hidden="true" tabindex="-1"></a>    sdk_init <span class="op">=</span> <span class="cf">await</span> s.initialize()</span>
+<span id="cb46-5"><a href="#cb46-5" aria-hidden="true" tabindex="-1"></a>    test_eq({t.name <span class="cf">for</span> t <span class="kw">in</span> (<span class="cf">await</span> s.list_tools()).tools}, {<span class="st">'fahrenheit'</span>,<span class="st">'nap'</span>,<span class="st">'crash'</span>})</span>
+<span id="cb46-6"><a href="#cb46-6" aria-hidden="true" tabindex="-1"></a>    sdk_res <span class="op">=</span> <span class="cf">await</span> s.call_tool(<span class="st">'fahrenheit'</span>, <span class="bu">dict</span>(celsius<span class="op">=</span><span class="dv">100</span>))</span>
+<span id="cb46-7"><a href="#cb46-7" aria-hidden="true" tabindex="-1"></a>test_eq(sdk_res.content[<span class="dv">0</span>].text, <span class="st">'212.0'</span>)</span>
+<span id="cb46-8"><a href="#cb46-8" aria-hidden="true" tabindex="-1"></a>sdk_init.serverInfo</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>Implementation(name='demo', title=None, version='0.0.5', websiteUrl=None, icons=None)</code></pre>
+</div>
+</div>
+<p>In the other direction, our client calls an SDK FastMCP server. This setup returns SSE and creates a session id. The client sends the id with subsequent requests. After calling the tool, it ends the server session explicitly before closing its HTTP connection:</p>
+<div id="9654296e" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-09T11:58:21.415262+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-09T11:58:21.415893+00:00&quot;,&quot;total&quot;:0.0006321109999873897}}" data-execution_count="36">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb48"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> logging, uvicorn</span>
+<span id="cb48-2"><a href="#cb48-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> mcp.server.fastmcp <span class="im">import</span> FastMCP</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="be63d87e" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb49"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a>logging.getLogger(<span class="st">'mcp'</span>).setLevel(logging.WARNING)</span>
+<span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a>fm <span class="op">=</span> FastMCP(<span class="st">'sdkdemo'</span>)</span>
+<span id="cb49-3"><a href="#cb49-3" aria-hidden="true" tabindex="-1"></a><span class="at">@fm.tool</span>()</span>
+<span id="cb49-4"><a href="#cb49-4" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> double(x: <span class="bu">int</span>) <span class="op">-&gt;</span> <span class="bu">int</span>:</span>
+<span id="cb49-5"><a href="#cb49-5" aria-hidden="true" tabindex="-1"></a>    <span class="co">"Twice `x`"</span></span>
+<span id="cb49-6"><a href="#cb49-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> x<span class="op">*</span><span class="dv">2</span></span>
+<span id="cb49-7"><a href="#cb49-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb49-8"><a href="#cb49-8" aria-hidden="true" tabindex="-1"></a>port2 <span class="op">=</span> free_port()</span>
+<span id="cb49-9"><a href="#cb49-9" aria-hidden="true" tabindex="-1"></a>sdk_task <span class="op">=</span> asyncio.create_task(uvicorn.Server(uvicorn.Config(fm.streamable_http_app(), host<span class="op">=</span><span class="st">'127.0.0.1'</span>, port<span class="op">=</span>port2, log_level<span class="op">=</span><span class="st">'warning'</span>)).serve())</span>
+<span id="cb49-10"><a href="#cb49-10" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">100</span>):</span>
+<span id="cb49-11"><a href="#cb49-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">try</span>:</span>
+<span id="cb49-12"><a href="#cb49-12" aria-hidden="true" tabindex="-1"></a>        <span class="cf">with</span> socket.create_connection((<span class="st">'127.0.0.1'</span>, port2), timeout<span class="op">=</span><span class="fl">0.5</span>): <span class="cf">break</span></span>
+<span id="cb49-13"><a href="#cb49-13" aria-hidden="true" tabindex="-1"></a>    <span class="cf">except</span> <span class="pp">OSError</span>: <span class="cf">await</span> asyncio.sleep(<span class="fl">0.05</span>)</span>
+<span id="cb49-14"><a href="#cb49-14" aria-hidden="true" tabindex="-1"></a><span class="cf">async</span> <span class="cf">with</span> MCPClient.http(<span class="ss">f'http://127.0.0.1:</span><span class="sc">{</span>port2<span class="sc">}</span><span class="ss">/mcp'</span>) <span class="im">as</span> c:</span>
+<span id="cb49-15"><a href="#cb49-15" aria-hidden="true" tabindex="-1"></a>    test_eq(c.info[<span class="st">'serverInfo'</span>][<span class="st">'name'</span>], <span class="st">'sdkdemo'</span>)</span>
+<span id="cb49-16"><a href="#cb49-16" aria-hidden="true" tabindex="-1"></a>    <span class="cf">assert</span> c.tr.sess, <span class="st">'SDK server should have minted a session id'</span></span>
+<span id="cb49-17"><a href="#cb49-17" aria-hidden="true" tabindex="-1"></a>    dbl <span class="op">=</span> <span class="cf">await</span> c.tools.double(x<span class="op">=</span><span class="dv">21</span>)</span>
+<span id="cb49-18"><a href="#cb49-18" aria-hidden="true" tabindex="-1"></a>    <span class="cf">await</span> c.tr.delete()</span>
+<span id="cb49-19"><a href="#cb49-19" aria-hidden="true" tabindex="-1"></a>    <span class="cf">assert</span> c.tr.sess <span class="kw">is</span> <span class="va">None</span></span>
+<span id="cb49-20"><a href="#cb49-20" aria-hidden="true" tabindex="-1"></a>dbl</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>[09/09/26 18:40:43] INFO     HTTP Request: POST                  _client.py:1740
+                             http://127.0.0.1:56411/mcp                         
+                             "HTTP/1.1 200 OK"                                  
+                    INFO     HTTP Request: POST                  _client.py:1740
+                             http://127.0.0.1:56411/mcp                         
+                             "HTTP/1.1 202 Accepted"                            
+                    INFO     HTTP Request: POST                  _client.py:1740
+                             http://127.0.0.1:56411/mcp                         
+                             "HTTP/1.1 200 OK"                                  
+                    INFO     HTTP Request: POST                  _client.py:1740
+                             http://127.0.0.1:56411/mcp                         
+                             "HTTP/1.1 200 OK"                                  </code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<pre><code>'42'</code></pre>
+</div>
+</div>
+</section>
+<section id="the-mcpmini-command" class="level2">
+<h2 class="anchored" data-anchor-id="the-mcpmini-command">The mcpmini command</h2>
+<p>An MCP host needs a command to launch. <code>mcpmini tools.py</code> loads and serves a Python file without a wrapper script. The file stem names the server, and its docstring supplies the instructions.</p>
+<p>A nonempty <code>__all__</code> selects the objects to serve. Without it, <a href="https://AnswerDotAI.github.io/mcpmini/core.html#load_server"><code>load_server</code></a> selects functions defined in that module. Either way, it removes names beginning with <code>_</code>. Loading the file executes its top-level code.</p>
+<div id="10e009fd" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-09T11:58:21.417904+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-09T11:58:21.420854+00:00&quot;,&quot;total&quot;:0.002953105000017331}}" data-execution_count="38">
+<hr>
+<p><a href="https://github.com/AnswerDotAI/mcpmini/blob/main/mcpmini/core.py#L395" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="load_server" class="level3">
+<h3 class="anchored" data-anchor-id="load_server">load_server</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb52"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> load_server(</span>
+<span id="cb52-2"><a href="#cb52-2" aria-hidden="true" tabindex="-1"></a>    path, <span class="co"># Python file whose public docmented functions become the tools</span></span>
+<span id="cb52-3"><a href="#cb52-3" aria-hidden="true" tabindex="-1"></a>):</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>An <a href="https://AnswerDotAI.github.io/mcpmini/core.html#mcpserver"><code>MCPServer</code></a> for the file at <code>path</code>: named after it, instructed by its docstring, serving its functions</em></p>
+</section>
+</div>
+<p>This file defines a public converter, a private helper, and an import. With no <code>__all__</code>, only the converter becomes a tool. Imported helpers are not tools by default; an explicit <code>__all__</code> can include them:</p>
+<div id="0500bbed" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb53"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a>toolsfile <span class="op">=</span> Path(tempfile.mkdtemp())<span class="op">/</span><span class="st">'weather.py'</span></span>
+<span id="cb53-2"><a href="#cb53-2" aria-hidden="true" tabindex="-1"></a>toolsfile.write_text(<span class="st">""""Answer weather questions."</span></span>
+<span id="cb53-3"><a href="#cb53-3" aria-hidden="true" tabindex="-1"></a><span class="st">from json import dumps</span></span>
+<span id="cb53-4"><a href="#cb53-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb53-5"><a href="#cb53-5" aria-hidden="true" tabindex="-1"></a><span class="st">def _secret(): pass</span></span>
+<span id="cb53-6"><a href="#cb53-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb53-7"><a href="#cb53-7" aria-hidden="true" tabindex="-1"></a><span class="st">def celsius(</span></span>
+<span id="cb53-8"><a href="#cb53-8" aria-hidden="true" tabindex="-1"></a><span class="st">    fahrenheit:float, # Temperature to convert</span></span>
+<span id="cb53-9"><a href="#cb53-9" aria-hidden="true" tabindex="-1"></a><span class="st">)-&gt;float:</span></span>
+<span id="cb53-10"><a href="#cb53-10" aria-hidden="true" tabindex="-1"></a><span class="st">    "Convert Fahrenheit to Celsius"</span></span>
+<span id="cb53-11"><a href="#cb53-11" aria-hidden="true" tabindex="-1"></a><span class="st">    return (fahrenheit-32)*5/9</span></span>
+<span id="cb53-12"><a href="#cb53-12" aria-hidden="true" tabindex="-1"></a><span class="st">"""</span>)</span>
+<span id="cb53-13"><a href="#cb53-13" aria-hidden="true" tabindex="-1"></a>wsrv <span class="op">=</span> load_server(toolsfile)</span>
+<span id="cb53-14"><a href="#cb53-14" aria-hidden="true" tabindex="-1"></a>test_eq((wsrv.name, <span class="bu">list</span>(wsrv.funcs), wsrv.instructions), (<span class="st">'weather'</span>, [<span class="st">'celsius'</span>], <span class="st">'Answer weather questions.'</span>))</span>
+<span id="cb53-15"><a href="#cb53-15" aria-hidden="true" tabindex="-1"></a>wsrv.specs</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>[{'name': 'celsius',
+  'description': 'Convert Fahrenheit to Celsius\n\nReturns:\n- type: number',
+  'inputSchema': {'type': 'object',
+   'properties': {'fahrenheit': {'description': 'Temperature to convert',
+     'type': 'number'}},
+   'required': ['fahrenheit']}}]</code></pre>
+</div>
+</div>
+<p><code>call_parse</code> turns <a href="https://AnswerDotAI.github.io/mcpmini/core.html#main"><code>main</code></a>’s docments into the CLI. Stdio is the default. HTTP deployment uses <code>--transport http</code>, <code>--host</code>, <code>--port</code>, and <code>--path</code>. Supply the token with <code>--token</code> or <code>$MCPMINI_TOKEN</code>; <code>--no-token</code> opts out of the non-loopback protection. <code>streamable-http</code> is another accepted transport spelling.</p>
+<div id="b98a1ab3" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-09T11:58:21.422498+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-09T11:58:21.425494+00:00&quot;,&quot;total&quot;:0.0029986910000161515}}" data-execution_count="40">
+<hr>
+<p><a href="https://github.com/AnswerDotAI/mcpmini/blob/main/mcpmini/core.py#L406" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="main" class="level3">
+<h3 class="anchored" data-anchor-id="main">main</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb55"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb55-1"><a href="#cb55-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> main(</span>
+<span id="cb55-2"><a href="#cb55-2" aria-hidden="true" tabindex="-1"></a>    tools:<span class="bu">str</span>, <span class="co"># Python file whose public docmented functions are served</span></span>
+<span id="cb55-3"><a href="#cb55-3" aria-hidden="true" tabindex="-1"></a>    transport:<span class="bu">str</span><span class="op">=</span><span class="st">'stdio'</span>, <span class="co"># 'stdio', or 'http' for streamable HTTP</span></span>
+<span id="cb55-4"><a href="#cb55-4" aria-hidden="true" tabindex="-1"></a>    host:<span class="bu">str</span><span class="op">=</span><span class="st">'127.0.0.1'</span>, <span class="co"># Interface to bind, for http</span></span>
+<span id="cb55-5"><a href="#cb55-5" aria-hidden="true" tabindex="-1"></a>    port:<span class="bu">int</span><span class="op">=</span><span class="dv">8000</span>, <span class="co"># Port to bind, for http</span></span>
+<span id="cb55-6"><a href="#cb55-6" aria-hidden="true" tabindex="-1"></a>    token:<span class="bu">str</span><span class="op">=</span><span class="va">None</span>, <span class="co"># Bearer token, for http; `$MCPMINI_TOKEN` if unset</span></span>
+<span id="cb55-7"><a href="#cb55-7" aria-hidden="true" tabindex="-1"></a>    no_token:<span class="bu">bool</span><span class="op">=</span><span class="va">False</span>, <span class="co"># Serve http on a non-loopback interface openly, when auth lives elsewhere</span></span>
+<span id="cb55-8"><a href="#cb55-8" aria-hidden="true" tabindex="-1"></a>    path:<span class="bu">str</span><span class="op">=</span><span class="st">'/mcp'</span>, <span class="co"># Endpoint path, for http</span></span>
+<span id="cb55-9"><a href="#cb55-9" aria-hidden="true" tabindex="-1"></a>):</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Serve a Python file’s docmented functions as an MCP server</em></p>
+</section>
+</div>
+<p>This time the client launches the installed <code>mcpmini</code> command with the tools file as its argument. We check that the instructions reach the client and that the converter returns the expected value:</p>
+<div id="44ebbf47" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb56"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb56-1"><a href="#cb56-1" aria-hidden="true" tabindex="-1"></a>cmd <span class="op">=</span> shutil.which(<span class="st">'mcpmini'</span>)</span>
+<span id="cb56-2"><a href="#cb56-2" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> cmd, <span class="st">'mcpmini console script not installed: run `uv sync`'</span></span>
+<span id="cb56-3"><a href="#cb56-3" aria-hidden="true" tabindex="-1"></a><span class="cf">async</span> <span class="cf">with</span> MCPClient.stdio([cmd, <span class="bu">str</span>(toolsfile)]) <span class="im">as</span> c:</span>
+<span id="cb56-4"><a href="#cb56-4" aria-hidden="true" tabindex="-1"></a>    test_eq(c.info[<span class="st">'instructions'</span>], <span class="st">'Answer weather questions.'</span>)</span>
+<span id="cb56-5"><a href="#cb56-5" aria-hidden="true" tabindex="-1"></a>    freezing <span class="op">=</span> <span class="cf">await</span> c.tools.celsius(fahrenheit<span class="op">=</span><span class="dv">32</span>)</span>
+<span id="cb56-6"><a href="#cb56-6" aria-hidden="true" tabindex="-1"></a>freezing</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>'0.0'</code></pre>
+</div>
+</div>
+</section>
+<section id="a-live-client" class="level2">
+<h2 class="anchored" data-anchor-id="a-live-client">A live client</h2>
+<p>SDK interoperability does not tell us whether a model host will discover and use the tool. This disabled example uses the Claude Agent SDK to run Claude Code headlessly. Claude launches <code>mcpmini</code>, discovers the converter, and calls it.</p>
+<p>Checking the answer alone would miss a model doing the conversion itself. The assertion checks the actual <code>tool_use</code> name as well. These cells spend model tokens and do not run in automated tests.</p>
+<div id="5f31ff99" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb58"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb58-1"><a href="#cb58-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> claude_agent_sdk <span class="im">import</span> query, ClaudeAgentOptions, AssistantMessage, ResultMessage</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="3f1a5b0a" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb59"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb59-1"><a href="#cb59-1" aria-hidden="true" tabindex="-1"></a>logging.getLogger(<span class="st">'claude_agent_sdk'</span>).setLevel(logging.WARNING)</span>
+<span id="cb59-2"><a href="#cb59-2" aria-hidden="true" tabindex="-1"></a>live_tools <span class="op">=</span> Path(tempfile.mkdtemp())<span class="op">/</span><span class="st">'weather.py'</span></span>
+<span id="cb59-3"><a href="#cb59-3" aria-hidden="true" tabindex="-1"></a>live_tools.write_text(toolsfile.read_text())</span>
+<span id="cb59-4"><a href="#cb59-4" aria-hidden="true" tabindex="-1"></a>opts <span class="op">=</span> ClaudeAgentOptions(model<span class="op">=</span><span class="st">'haiku'</span>, max_turns<span class="op">=</span><span class="dv">3</span>, tools<span class="op">=</span>[], setting_sources<span class="op">=</span>[], strict_mcp_config<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb59-5"><a href="#cb59-5" aria-hidden="true" tabindex="-1"></a>    mcp_servers<span class="op">=</span><span class="bu">dict</span>(demo<span class="op">=</span><span class="bu">dict</span>(<span class="bu">type</span><span class="op">=</span><span class="st">'stdio'</span>, command<span class="op">=</span>shutil.which(<span class="st">'mcpmini'</span>), args<span class="op">=</span>[<span class="bu">str</span>(live_tools)])),</span>
+<span id="cb59-6"><a href="#cb59-6" aria-hidden="true" tabindex="-1"></a>    allowed_tools<span class="op">=</span>[<span class="st">'mcp__demo__celsius'</span>], system_prompt<span class="op">=</span><span class="st">'Use the tools you are given.'</span>)</span>
+<span id="cb59-7"><a href="#cb59-7" aria-hidden="true" tabindex="-1"></a>msgs <span class="op">=</span> [m <span class="cf">async</span> <span class="cf">for</span> m <span class="kw">in</span> query(prompt<span class="op">=</span><span class="st">'Convert 212 fahrenheit to celsius with the celsius tool. Reply with only the number.'</span>, options<span class="op">=</span>opts)]</span>
+<span id="cb59-8"><a href="#cb59-8" aria-hidden="true" tabindex="-1"></a>tus <span class="op">=</span> [b.name <span class="cf">for</span> m <span class="kw">in</span> msgs <span class="cf">if</span> <span class="bu">isinstance</span>(m, AssistantMessage) <span class="cf">for</span> b <span class="kw">in</span> m.content <span class="cf">if</span> <span class="bu">getattr</span>(b,<span class="st">'name'</span>,<span class="va">None</span>)]</span>
+<span id="cb59-9"><a href="#cb59-9" aria-hidden="true" tabindex="-1"></a>res <span class="op">=</span> first(m.result <span class="cf">for</span> m <span class="kw">in</span> msgs <span class="cf">if</span> <span class="bu">isinstance</span>(m, ResultMessage))</span>
+<span id="cb59-10"><a href="#cb59-10" aria-hidden="true" tabindex="-1"></a>test_eq(tus, [<span class="st">'mcp__demo__celsius'</span>])</span>
+<span id="cb59-11"><a href="#cb59-11" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> <span class="st">'100'</span> <span class="kw">in</span> res</span>
+<span id="cb59-12"><a href="#cb59-12" aria-hidden="true" tabindex="-1"></a>res</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>'100.0'</code></pre>
+</div>
+</div>
+<p>The HTTP version supplies a URL and an <code>Authorization</code> header instead of a subprocess command. The server could also run on another machine. To record that connection in Claude Code, <code>claude mcp add --transport http</code> accepts the URL and <code>--header</code> option. This example still uses loopback and also spends model tokens.</p>
+<div id="e588fdf4" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb61"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb61-1"><a href="#cb61-1" aria-hidden="true" tabindex="-1"></a>live_port <span class="op">=</span> free_port()</span>
+<span id="cb61-2"><a href="#cb61-2" aria-hidden="true" tabindex="-1"></a>live_task <span class="op">=</span> asyncio.create_task(serve_mcp(wsrv, port<span class="op">=</span>live_port, token<span class="op">=</span><span class="st">'sesame'</span>))</span>
+<span id="cb61-3"><a href="#cb61-3" aria-hidden="true" tabindex="-1"></a><span class="cf">await</span> asyncio.sleep(<span class="fl">0.2</span>)</span>
+<span id="cb61-4"><a href="#cb61-4" aria-hidden="true" tabindex="-1"></a>hopts <span class="op">=</span> ClaudeAgentOptions(model<span class="op">=</span><span class="st">'haiku'</span>, max_turns<span class="op">=</span><span class="dv">3</span>, tools<span class="op">=</span>[], setting_sources<span class="op">=</span>[], strict_mcp_config<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb61-5"><a href="#cb61-5" aria-hidden="true" tabindex="-1"></a>    mcp_servers<span class="op">=</span><span class="bu">dict</span>(demo<span class="op">=</span><span class="bu">dict</span>(<span class="bu">type</span><span class="op">=</span><span class="st">'http'</span>, url<span class="op">=</span><span class="ss">f'http://127.0.0.1:</span><span class="sc">{</span>live_port<span class="sc">}</span><span class="ss">/mcp'</span>, headers<span class="op">=</span>{<span class="st">'Authorization'</span>: <span class="st">'Bearer sesame'</span>})),</span>
+<span id="cb61-6"><a href="#cb61-6" aria-hidden="true" tabindex="-1"></a>    allowed_tools<span class="op">=</span>[<span class="st">'mcp__demo__celsius'</span>], system_prompt<span class="op">=</span><span class="st">'Use the tools you are given.'</span>)</span>
+<span id="cb61-7"><a href="#cb61-7" aria-hidden="true" tabindex="-1"></a>hmsgs <span class="op">=</span> [m <span class="cf">async</span> <span class="cf">for</span> m <span class="kw">in</span> query(prompt<span class="op">=</span><span class="st">'Convert 451 fahrenheit to celsius with the celsius tool. Reply with only the number.'</span>, options<span class="op">=</span>hopts)]</span>
+<span id="cb61-8"><a href="#cb61-8" aria-hidden="true" tabindex="-1"></a>htus <span class="op">=</span> [b.name <span class="cf">for</span> m <span class="kw">in</span> hmsgs <span class="cf">if</span> <span class="bu">isinstance</span>(m, AssistantMessage) <span class="cf">for</span> b <span class="kw">in</span> m.content <span class="cf">if</span> <span class="bu">getattr</span>(b,<span class="st">'name'</span>,<span class="va">None</span>)]</span>
+<span id="cb61-9"><a href="#cb61-9" aria-hidden="true" tabindex="-1"></a>hres <span class="op">=</span> first(m.result <span class="cf">for</span> m <span class="kw">in</span> hmsgs <span class="cf">if</span> <span class="bu">isinstance</span>(m, ResultMessage))</span>
+<span id="cb61-10"><a href="#cb61-10" aria-hidden="true" tabindex="-1"></a>live_task.cancel()</span>
+<span id="cb61-11"><a href="#cb61-11" aria-hidden="true" tabindex="-1"></a>test_eq(htus, [<span class="st">'mcp__demo__celsius'</span>])</span>
+<span id="cb61-12"><a href="#cb61-12" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> <span class="st">'232'</span> <span class="kw">in</span> hres</span>
+<span id="cb61-13"><a href="#cb61-13" aria-hidden="true" tabindex="-1"></a>hres</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>'232.78'</code></pre>
+</div>
+</div>
+</section>
+<section id="cleanup" class="level2">
+<h2 class="anchored" data-anchor-id="cleanup">Cleanup</h2>
+<p>Cancel both loopback servers and wait for their tasks to finish.</p>
+<div id="2ec81732" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb63"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb63-1"><a href="#cb63-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> t <span class="kw">in</span> (server_task, sdk_task): t.cancel()</span>
+<span id="cb63-2"><a href="#cb63-2" aria-hidden="true" tabindex="-1"></a>res <span class="op">=</span> <span class="cf">await</span> asyncio.gather(server_task, sdk_task, return_exceptions<span class="op">=</span><span class="va">True</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/AnswerDotAI\.github\.io\/mcpmini");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/AnswerDotAI/mcpmini/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></div></div></footer></body></html>
