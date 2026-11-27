@@ -7,7 +7,7 @@ name = "mcpmini"
 dynamic = ["version"]
 description = "A small readable MCP library for serving Python functions as tools and calling MCP servers"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 license = "Apache-2.0"
 authors = [{name = "Jeremy Howard", email = "github@jhoward.fastmail.fm"}]
 keywords = ['nbdev']
