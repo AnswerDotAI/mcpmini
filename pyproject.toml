@@ -37,6 +37,7 @@ version = {attr = "mcpmini.__version__"}
 include = ["mcpmini"]
 
 [tool.nbdev]
+to_meta = ["export"]
 
 [tool.chkstyle]
 skip_paths = ["_modidx.py"]
